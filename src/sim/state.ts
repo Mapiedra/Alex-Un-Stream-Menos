@@ -1,4 +1,6 @@
 import { createRng, type RngState } from './rng.ts'
+import type { ChatMessage } from './chat.ts'
+import { createClipState, type ClipState } from './clip.ts'
 import { TUNABLES } from './tunables.ts'
 
 export const SCHEMA_VERSION = 1
@@ -53,6 +55,15 @@ export interface GameState {
   hype: number
   ideas: number
 
+  /** El unico clicker del juego. Nunca obligatorio. */
+  clip: ClipState
+
+  /** Los ultimos mensajes del chat. La comunidad, hecha visible. */
+  chat: ChatMessage[]
+  chatNextId: number
+  /** Resto acumulado del generador de chat entre ticks. */
+  chatAcc: number
+
   // Economia
   ahorros: number
   /** Derivado: ingresos por segundo del ultimo tick, para mostrar en la UI. */
@@ -99,6 +110,12 @@ export function createInitialState(seed = 1): GameState {
     fatiga: 0,
     hype: 0,
     ideas: 0,
+
+    clip: createClipState(),
+
+    chat: [],
+    chatNextId: 1,
+    chatAcc: 0,
 
     ahorros: costeVidaInicial * TUNABLES.economia.initialSavingsWeeks,
     ingresosPorSegundo: 0,

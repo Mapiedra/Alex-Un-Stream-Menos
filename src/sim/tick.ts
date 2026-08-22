@@ -10,6 +10,8 @@ import {
   clamp01,
 } from './formulas.ts'
 import { houseLivingCost, type GameState } from './state.ts'
+import { CHAT_BUFFER, chatStep } from './chat.ts'
+import { clipMultiplier, clipStep } from './clip.ts'
 
 /**
  * Un paso de simulacion.
@@ -28,12 +30,16 @@ export function step(state: GameState, dtMs: number): GameState {
   // --- Calidad (derivada) -------------------------------------------------
   const calidad = calcCalidad(state.vida, state.fatiga, state.multCalidad)
 
+  // --- Momento clippeable -------------------------------------------------
+  const clipRes = clipStep(state.clip, state.rng, dtMs * TUNABLES.gameSpeed)
+
   // --- Alcance ------------------------------------------------------------
   const produccion = calcProduccion(
     alloc.produccion,
     calidad,
     state.multEficiencia * state.legadoEficiencia,
     state.hype,
+    clipMultiplier(state.clip),
   )
   const ganancia = produccion * state.multAlcance * ALCANCE_POR_PRODUCCION
   const decay = calcAlcanceDecayRate(state.comunidad, state.legadoRetencion)
@@ -74,12 +80,31 @@ export function step(state: GameState, dtMs: number): GameState {
     (state.ahorros * TUNABLES.economia.savingsYield) / (52 * TUNABLES.secondsPerWeek)
   const ahorros = state.ahorros + (ingresosPorSegundo + rendimientoAhorros - costeVidaPorSegundo) * dt
 
+  // --- Chat ---------------------------------------------------------------
+  // El ritmo lo marca el alcance; las suscripciones, la comunidad.
+  const chat = chatStep(
+    clipRes.rng,
+    { alcance, comunidad, calidad, fatiga, hype },
+    dt,
+    state.chatAcc,
+    state.chatNextId,
+  )
+  const mensajes =
+    chat.mensajes.length > 0
+      ? [...state.chat, ...chat.mensajes].slice(-CHAT_BUFFER)
+      : state.chat
+
   // --- Reloj --------------------------------------------------------------
   const elapsedMs = state.elapsedMs + dtMs * TUNABLES.gameSpeed
   const week = Math.floor(elapsedMs / 1000 / TUNABLES.secondsPerWeek)
 
   return {
     ...state,
+    rng: chat.rng,
+    clip: clipRes.clip,
+    chat: mensajes,
+    chatNextId: chat.nextId,
+    chatAcc: chat.acc,
     elapsedMs,
     week,
     alcance,

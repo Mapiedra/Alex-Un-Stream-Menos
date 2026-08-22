@@ -1,8 +1,13 @@
 # La Maquina de Hacer Videos
 
-Incremental narrativo sobre la carrera de un creador de contenido. El GDD de
-partida es `alexelcapo_gdd_definitivo.pdf`; el plan de desarrollo vive fuera del
-repositorio, en el fichero de plan de la sesion.
+Incremental narrativo sobre la carrera de un creador de contenido. El GDD de partida es
+`docs/gdd.pdf` y las referencias visuales estan en `docs/ref/`; el plan de
+desarrollo vive fuera del repositorio, en el fichero de plan de la sesion.
+
+**La interfaz es el reproductor.** No hay una pantalla de incremental con
+barras: la partida ocurre dentro de la interfaz que el jugador ya reconoce.
+El contador de espectadores ES el alcance, el chat ES la comunidad, y el boton
+Clip ES el momento clippeable del GDD.
 
 ## Comandos
 
@@ -32,7 +37,9 @@ horas de partida en un segundo sin abrir un navegador.
 
 ## Estado
 
-Fase F0 (cimientos) completada. Ver el plan para el resto.
+Fase F0 (cimientos) completada, mas la capa visual del reproductor.
 
-La paleta actual es **provisional**: se sustituira por la extraida de los frames
-de la intro del canal. Sustituirla es editar un solo fichero.
+La paleta esta **extraida por codigo** de `docs/ref/` — el avatar, la calle de
+la intro y las capturas del directo. Ningun valor esta estimado a ojo. La
+escena de la calle es un placeholder de CSS por capas hasta que lleguen los
+lotes de pixel art; cada capa se sustituye por su sprite sin tocar el resto.

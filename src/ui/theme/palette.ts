@@ -1,133 +1,161 @@
 /**
  * PALETA — FUENTE UNICA DE COLOR DEL PROYECTO
  *
- * ORIGEN: la intro pixel art del canal. Dos referencias:
- *   1. El avatar: base casi negra azulada, rim light cian y magenta, gafas
- *      cian brillante, piel y pelo calidos oscuros.
- *   2. La calle nocturna: fondo purpura profundo con lluvia, neones en cian,
- *      magenta, verde, ambar y rojo, conos volumetricos de farola, y —lo mas
- *      importante— ventanas de luz CALIDA recortadas contra el frio de la
- *      calle.
+ * ORIGEN: extraida por codigo de las referencias en docs/ref/. No hay ningun
+ * valor estimado a ojo.
  *
- * Ese contraste frio/calor es el eje de la paleta y del juego: el neon de
- * fuera llama la atencion y se apaga; la luz de las ventanas es donde hay
- * gente que se queda. Alcance y comunidad se pintan exactamente asi.
+ *   avatar-canal.webp        el avatar del canal: fondo #0c0b22, rim light
+ *                            cian #41caee, piel #d9c4b9
+ *   intro-calle.png          la calle nocturna de la intro: neones y farolas
+ *   twitch-directo-chat.png  el reproductor y el chat: cromo de interfaz
+ *   twitch-webcam-juego.png  el acento morado #a970ff de la barra
  *
- * PRECISION: valores leidos de las imagenes, no extraidos por codigo. Para
- * clavarlos al pixel, guardar los PNG en docs/ref/ y reextraer.
+ * Tres bloques con tres funciones distintas:
+ *   ESCENA   — la calle y el personaje (capa diegetica, pixel art)
+ *   CROMO    — el reproductor y el chat (capa de datos, legible)
+ *   CHAT     — los colores de nick, que son datos de gente, no decoracion
  *
  * REGLA DURA: ningun color hexadecimal puede aparecer fuera de aqui, ni en
  * CSS ni en TSX. La comprobacion vive en tests/palette.test.ts.
  */
 
 export const PALETTE = {
-  // --- Base: purpura profundo de la calle, no negro puro. La sombra tiene color.
-  night950: '#0c0817',
-  night900: '#150f24',
-  night800: '#1e1633',
-  night700: '#2d2145',
-  night600: '#3d2d5c',
-  slate500: '#4a4470',
-  slate400: '#6b6490',
-  mist300: '#9d95b8',
-  mist200: '#c9c3dc',
-  white100: '#f0ecfa',
+  // ===== ESCENA — sombras de la calle. Purpura profundo, nunca negro puro ===
+  night950: '#08060c',
+  night900: '#0c0b22',
+  night850: '#0a0a16',
+  night800: '#141123',
+  night700: '#1e1e3f',
+  night600: '#39334e',
+  slate500: '#525097',
+  slate400: '#5b525e',
+  mist300: '#868688',
+  mist200: '#cccccd',
+  white100: '#fbfaf7',
 
-  // --- Neon frio: el cian de las gafas, los carteles y los expendedores
-  cyan300: '#7ff5ff',
-  cyan400: '#4ee0f0',
-  cyan600: '#2593a8',
+  // ===== ESCENA — neones, extraidos por familia de tono ====================
+  /** Farolas y ventanas calidas: el color mas presente de toda la intro. */
+  lamp400: '#f08e09',
+  lamp300: '#ffb357',
+  /** El cian de las gafas del avatar y de los rotulos. */
+  cyan400: '#41caee',
+  cyan300: '#0ae6f6',
+  cyan600: '#2b61ac',
+  /** El rosa del rotulo vertical. */
+  pink400: '#ea4879',
+  pink300: '#df5aa2',
+  /** El rojo del rotulo ENERGY. */
+  red500: '#ff621b',
+  /** Verdes de las pantallas de pixeles. */
+  green400: '#25b11e',
+  green300: '#0fb621',
+  /** El amarillo verdoso de los carteles. */
+  acid400: '#ccd42d',
+  /** Violetas de los neones altos. */
+  violet500: '#752ca6',
+  violet600: '#4a24a4',
+  /** Azul de la lluvia y del cristal. */
+  rain400: '#4e91e7',
+  /** Piel del personaje. */
+  skin300: '#d9c4b9',
+  skin500: '#b58c8e',
 
-  // --- Neon caliente: el magenta que grita desde los rotulos
-  pink300: '#ff6bb5',
-  pink400: '#f04a9c',
-  pink600: '#b02a6b',
+  // ===== CROMO — el reproductor y el chat ==================================
+  /** Fondo del panel de chat. */
+  ui900: '#18181b',
+  /** Cabecera del chat y superficies elevadas. */
+  ui800: '#26262c',
+  /** Fondo del reproductor, practicamente negro. */
+  ui950: '#020204',
+  uiText: '#d8d8da',
+  uiTextMuted: '#868688',
+  uiTextDim: '#666669',
+  /** Acento morado de la barra de progreso. */
+  accent400: '#a970ff',
 
-  // --- Luz calida de ventana: donde hay gente dentro
-  amber300: '#ffd966',
-  amber400: '#f5c542',
-  olive400: '#d4c67a',
-  olive600: '#8f8450',
-
-  // --- Neon verde del rotulo y de las pantallas
-  green400: '#7ef05a',
-  green600: '#3d8f38',
-
-  // --- Rojo de aviso: el rotulo vertical de la calle
-  red400: '#ff6b4a',
-  red500: '#f0483c',
-
-  // --- Violeta de los neones altos
-  violet400: '#a06bf0',
-
-  // --- La luna de cara palida sobre los tejados
-  moon200: '#f5c6d0',
-
-  // --- Materia: piel, pelo, madera de la valla, asfalto mojado
-  skin300: '#c98f6a',
-  skin500: '#8f5a3f',
-  hair700: '#2b2733',
-  wood500: '#7d5540',
-  wood700: '#4a3225',
-  asphalt600: '#2a3a52',
-  asphalt400: '#3d4f6b',
+  // ===== CHAT — los colores de nick por defecto de la plataforma ===========
+  nick01: '#ff4500',
+  nick02: '#ffa62b',
+  nick03: '#caf22f',
+  nick04: '#a9f85b',
+  nick05: '#00ff7f',
+  nick06: '#00e1ff',
+  nick07: '#317eff',
+  nick08: '#bf31fe',
+  nick09: '#d628ae',
+  nick10: '#ff0007',
 } as const
 
 export type PaletteKey = keyof typeof PALETTE
 export type PaletteColor = (typeof PALETTE)[PaletteKey]
 
+/** Los colores que puede tomar el nick de alguien en el chat. */
+export const NICK_COLORS = [
+  PALETTE.nick01,
+  PALETTE.nick02,
+  PALETTE.nick03,
+  PALETTE.nick04,
+  PALETTE.nick05,
+  PALETTE.nick06,
+  PALETTE.nick07,
+  PALETTE.nick08,
+  PALETTE.nick09,
+  PALETTE.nick10,
+] as const
+
 /**
  * Tokens semanticos. La UI referencia SIEMPRE estos, nunca PALETTE
- * directamente: cuando lleguen los frames exactos solo cambian los valores de
- * arriba y el significado se mantiene.
+ * directamente.
  */
 export const TOKENS = {
-  bg: PALETTE.night950,
-  bgPanel: PALETTE.night900,
-  bgRaised: PALETTE.night800,
-  border: PALETTE.night700,
-  borderStrong: PALETTE.night600,
-  textDim: PALETTE.slate400,
-  textMuted: PALETTE.mist300,
-  text: PALETTE.mist200,
+  // Cromo del reproductor
+  bg: PALETTE.ui950,
+  bgPanel: PALETTE.ui900,
+  bgRaised: PALETTE.ui800,
+  border: PALETTE.ui800,
+  borderStrong: PALETTE.slate400,
+  textDim: PALETTE.uiTextDim,
+  textMuted: PALETTE.uiTextMuted,
+  text: PALETTE.uiText,
   textBright: PALETTE.white100,
+  accent: PALETTE.accent400,
 
   /**
-   * Un color por recurso, cada uno trazable a algo de la referencia.
+   * Un color por recurso, cada uno trazable a la referencia.
    *
-   * El reparto no es decorativo: ALCANCE es el neon frio que grita desde la
-   * calle y se apaga, COMUNIDAD es la luz calida de las ventanas con gente
-   * dentro. El jugador debe poder leer la tesis del juego en los colores
-   * antes de entender las formulas.
+   * El reparto no es decorativo: ALCANCE es el cian frio de los rotulos, que
+   * grita y se apaga; COMUNIDAD es el ambar calido de las farolas y las
+   * ventanas, que es donde hay gente. El jugador deberia poder leer la tesis
+   * del juego en los colores antes de entender las formulas.
    */
-  alcance: PALETTE.cyan400,
-  comunidad: PALETTE.amber400,
-  calidad: PALETTE.violet400,
-  vida: PALETTE.green400,
-  hype: PALETTE.pink400,
-  ingresos: PALETTE.olive400,
-  ideas: PALETTE.moon200,
+  alcance: PALETTE.cyan300,
+  comunidad: PALETTE.lamp300,
+  calidad: PALETTE.violet500,
+  vida: PALETTE.green300,
+  hype: PALETTE.pink300,
+  ingresos: PALETTE.acid400,
+  ideas: PALETTE.rain400,
   fatiga: PALETTE.red500,
 
-  // Materia de la escena
+  // Escena
+  sceneSky: PALETTE.night900,
+  sceneFar: PALETTE.night850,
+  sceneMid: PALETTE.night800,
+  sceneNear: PALETTE.night700,
+  sceneEdge: PALETTE.night600,
+  lamp: PALETTE.lamp400,
+  lampGlow: PALETTE.lamp300,
+  rain: PALETTE.rain400,
   skin: PALETTE.skin300,
   skinShade: PALETTE.skin500,
-  hair: PALETTE.hair700,
-  wood: PALETTE.wood500,
-  woodShade: PALETTE.wood700,
-  street: PALETTE.asphalt600,
-  streetLit: PALETTE.asphalt400,
 
   // Estados
   positive: PALETTE.green400,
   negative: PALETTE.red500,
-  warning: PALETTE.amber400,
-
-  /** Halos de neon. Frio para el alcance, caliente para el hype. */
-  glow: PALETTE.cyan300,
-  glowAlt: PALETTE.pink300,
-  /** Luz de farola: el cono volumetrico de la referencia. */
-  lamp: PALETTE.amber300,
+  warning: PALETTE.lamp300,
+  live: PALETTE.nick10,
+  glow: PALETTE.cyan400,
+  glowAlt: PALETTE.pink400,
 } as const
 
 export type TokenKey = keyof typeof TOKENS

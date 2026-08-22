@@ -1,80 +1,101 @@
 import { GameLoop } from './ui/GameLoop.tsx'
 import { DevPanel } from './ui/debug/DevPanel.tsx'
-import { ResourceRow } from './ui/components/ResourceRow.tsx'
+import { PlayerHeader } from './ui/player/PlayerHeader.tsx'
+import { Stage } from './ui/player/Stage.tsx'
+import { ControlBar } from './ui/player/ControlBar.tsx'
+import { ChatPanel } from './ui/player/ChatPanel.tsx'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
 import { houseLivingCost } from './sim/state.ts'
 import { TUNABLES } from './sim/tunables.ts'
+import type { TokenKey } from './ui/theme/palette.ts'
 
+/**
+ * El juego es el reproductor.
+ *
+ * En lugar de una pantalla de incremental con barras y botones, la partida
+ * ocurre dentro de la interfaz que el jugador ya reconoce: cabecera de canal,
+ * escena, webcam, chat lateral y barra de controles. Cada elemento tiene una
+ * funcion mecanica, no decorativa — el contador de espectadores ES el alcance,
+ * el chat ES la comunidad, y el boton Clip ES el momento clippeable del GDD.
+ */
 export function App() {
   const g = useGame((s) => s.game)
+  const paused = useGame((s) => s.paused)
+  const setPaused = useGame((s) => s.setPaused)
   const publish = useGame((s) => s.publish)
+  const catchClip = useGame((s) => s.catchClip)
 
   const costeVidaSemanal = houseLivingCost(g.houseStage)
   const ingresosSemanales = g.ingresosPorSegundo * TUNABLES.secondsPerWeek
+  const segundosEnSemana = (g.elapsedMs / 1000) % TUNABLES.secondsPerWeek
+  const progresoSemana = segundosEnSemana / TUNABLES.secondsPerWeek
+
+  // La intensidad de los neones sigue al alcance: la calle se enciende cuando
+  // hay gente mirando y se apaga cuando no.
+  const intensidad = Math.min(1, g.alcance / 8000)
 
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: '0 auto',
-        padding: 'var(--space-6)',
-        display: 'grid',
-        gap: 'var(--space-4)',
-      }}
-    >
+    <div className="app">
       <GameLoop />
 
-      <h1 className="pixel" style={{ fontSize: 'var(--px-24)', color: 'var(--c-textBright)', margin: 0 }}>
-        La maquina de hacer videos
-      </h1>
+      <PlayerHeader
+        titulo="FRANKENSTEIN de Mary Shelley (1818) y luego un juego de correr"
+        espectadores={g.alcance}
+        enDirecto={!paused}
+      />
+
+      <Stage intensidad={intensidad} fatiga={g.fatiga} lloviendo />
+
+      <ControlBar
+        enPausa={paused}
+        onTogglePausa={() => setPaused(!paused)}
+        progresoSemana={progresoSemana}
+        semana={g.week}
+        ciclo={g.cycle}
+        clipActivo={g.clip.activo}
+        clipBonus={g.clip.bonusRestanteMs > 0}
+        onClip={catchClip}
+        onPublicar={publish}
+      />
+
+      <div className="stats">
+        <Stat label="Alcance" valor={fmt(g.alcance)} token="alcance" hint="Gente que te descubre ahora. Sube rapido y cae con facilidad; la comunidad frena esa caida." />
+        <Stat label="Comunidad" valor={fmt(g.comunidad)} token="comunidad" hint="Gente que sigue por ti. Crece lento y protege cuando paras." />
+        <Stat label="Calidad" valor={g.calidad.toFixed(2)} token="calidad" hint="base x f(vida) x (1 - fatiga)^1.5 x mejoras. Multiplica el rendimiento por hora." />
+        <Stat label="Vida" valor={pct(g.vida)} token="vida" hint="Equilibrio personal. Alimenta la calidad y las ideas." />
+        <Stat label="Fatiga" valor={pct(g.fatiga)} token="fatiga" hint="Por encima del 60% la calidad sufre; del 85%, burnout. Cuesta caro, pero nunca termina la partida." />
+        <Stat label="Hype" valor={`x${(1 + g.hype).toFixed(2)}`} token="hype" hint="Multiplicador temporal. Decae rapido." />
+        <Stat label="Ideas" valor={fmt(g.ideas, 1)} token="ideas" hint="Materia prima de los formatos nuevos. La genera la vida personal." />
+        <Stat label="Ahorros" valor={eur(g.ahorros)} token="ingresos" hint="Lo que NO gastaste en mejoras. Es tu via de retiro." />
+        <Stat label="Ingresos" valor={`${eur(ingresosSemanales, 1)}/sem`} token="ingresos" hint="Alcance + comunidad + cola larga del catalogo." />
+        <Stat label="Coste de vida" valor={`${eur(costeVidaSemanal)}/sem`} token="fatiga" hint="Sube con cada etapa de casa: profesionalizarse encarece retirarse." />
+        <Stat label="Catalogo" valor={`${fmt(g.publicacionesTotales)}`} token="calidad" hint="Cada publicacion renta para siempre, tanto mas cuanta mas calidad tenia." />
+        <Stat label="Clips" valor={`${g.clip.acertados}`} token="alcance" hint="Momentos capturados. Fallarlos no cuesta progreso: la partida es ganable sin acertar ninguno." />
+      </div>
 
       <DevPanel />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-        <div className="panel">
-          <ResourceRow
-            label="Alcance"
-            value={fmt(g.alcance)}
-            token="alcance"
-            hint="Gente que te descubre ahora. Sube rapido y cae con facilidad; la comunidad frena esa caida."
-          />
-          <ResourceRow
-            label="Comunidad"
-            value={fmt(g.comunidad)}
-            token="comunidad"
-            hint="Gente que sigue por ti. Crece lento y protege cuando paras."
-          />
-          <ResourceRow
-            label="Calidad"
-            value={g.calidad.toFixed(2)}
-            token="calidad"
-            hint="base x f(vida) x (1 - fatiga)^1.5 x mejoras. Multiplica el rendimiento por hora."
-          />
-          <ResourceRow label="Vida" value={pct(g.vida)} token="vida" hint="Equilibrio personal. Alimenta calidad e ideas." />
-          <ResourceRow
-            label="Fatiga"
-            value={pct(g.fatiga)}
-            token="fatiga"
-            hint="Por encima del 60% la calidad sufre; del 85%, burnout. Cuesta caro, pero nunca termina la partida."
-          />
-          <ResourceRow label="Hype" value={`x${(1 + g.hype).toFixed(2)}`} token="hype" hint="Multiplicador temporal. Decae rapido." />
-          <ResourceRow label="Ideas" value={fmt(g.ideas, 1)} token="ideas" hint="Materia prima de los formatos nuevos. La genera la vida personal." />
-        </div>
+      <ChatPanel mensajes={g.chat} suscriptores={g.comunidad} />
+    </div>
+  )
+}
 
-        <div className="panel">
-          <ResourceRow label="Ahorros" value={eur(g.ahorros)} token="ingresos" hint="Lo que NO gastaste en mejoras. Es tu via de retiro." />
-          <ResourceRow label="Ingresos" value={`${eur(ingresosSemanales, 1)}/sem`} token="ingresos" hint="Alcance + comunidad + cola larga del catalogo." />
-          <ResourceRow label="Coste de vida" value={`${eur(costeVidaSemanal)}/sem`} token="fatiga" hint="Sube con cada etapa de casa: profesionalizarse encarece retirarse." />
-          <ResourceRow label="Catalogo" value={`${fmt(g.publicacionesTotales)} pub.`} token="calidad" hint="Cada publicacion renta para siempre, tanto mas cuanta mas calidad tenia." />
+interface StatProps {
+  label: string
+  valor: string
+  token: TokenKey
+  /** La formula, expuesta al jugador. El publico de incrementales la exige. */
+  hint: string
+}
 
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            <button onClick={publish} style={{ width: '100%', fontSize: 'var(--px-16)', padding: 'var(--space-3)' }}>
-              Publicar video
-            </button>
-          </div>
-        </div>
-      </div>
+function Stat({ label, valor, token, hint }: StatProps) {
+  return (
+    <div className="stat" title={hint}>
+      <span className="stat__label" style={{ color: `var(--c-${token})` }}>
+        {label}
+      </span>
+      <span className="stat__valor data">{valor}</span>
     </div>
   )
 }

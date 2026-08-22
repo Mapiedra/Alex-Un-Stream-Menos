@@ -1,0 +1,425 @@
+/* Reproductor: cabecera, escena, chat y controles.
+   Ningun valor hexadecimal aqui — todo sale de los tokens de palette.ts. */
+
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: auto 1fr auto auto;
+  height: 100%;
+  background: var(--c-bg);
+}
+
+/* ---------- Cabecera ---------- */
+.player-header {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-bg);
+}
+
+.player-header__avatar {
+  border-radius: 50%;
+  border: 2px solid var(--c-accent);
+  image-rendering: pixelated;
+}
+
+.player-header__meta {
+  min-width: 0;
+}
+
+.player-header__canal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.player-header__nick {
+  color: var(--c-textBright);
+  font-weight: 700;
+}
+
+.player-header__verificado {
+  color: var(--c-accent);
+  font-size: 11px;
+}
+
+.player-header__titulo {
+  color: var(--c-textMuted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60ch;
+}
+
+.player-header__estado {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.badge-live {
+  background: var(--c-live);
+  color: var(--c-textBright);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px var(--space-2);
+}
+
+.player-header__viewers {
+  color: var(--c-live);
+  font-weight: 600;
+}
+
+/* ---------- Escena ---------- */
+.stage {
+  grid-column: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--c-sceneSky);
+  min-height: 340px;
+  image-rendering: pixelated;
+}
+
+.stage__cielo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--c-sceneSky), var(--c-sceneFar) 60%, var(--c-sceneMid));
+}
+
+.stage__lejos {
+  position: absolute;
+  inset: auto 0 22% 0;
+  height: 45%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--c-sceneMid) 0 38px,
+    var(--c-sceneNear) 38px 44px,
+    var(--c-sceneMid) 44px 96px,
+    var(--c-sceneFar) 96px 104px
+  );
+  opacity: 0.9;
+}
+
+.stage__rotulos {
+  position: absolute;
+  inset: 12% auto auto 6%;
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.stage__neon {
+  display: block;
+  width: 10px;
+  height: 68px;
+  opacity: calc(0.35 + var(--intensidad) * 0.65);
+}
+
+.stage__neon--cian {
+  background: var(--c-alcance);
+  box-shadow: 0 0 12px var(--c-glow);
+}
+
+.stage__neon--rosa {
+  background: var(--c-hype);
+  box-shadow: 0 0 12px var(--c-glowAlt);
+  height: 44px;
+}
+
+.stage__neon--verde {
+  background: var(--c-vida);
+  box-shadow: 0 0 10px var(--c-vida);
+  height: 30px;
+}
+
+/* La farola y su cono volumetrico: el foco de atencion de la referencia. */
+.stage__farola {
+  position: absolute;
+  right: 22%;
+  top: 8%;
+  bottom: 22%;
+  width: 3px;
+  background: var(--c-sceneEdge);
+}
+
+.stage__bombilla {
+  position: absolute;
+  top: 0;
+  left: -13px;
+  width: 30px;
+  height: 9px;
+  background: var(--c-lampGlow);
+  box-shadow: 0 0 18px var(--c-lamp);
+}
+
+.stage__cono {
+  position: absolute;
+  top: 9px;
+  left: -60px;
+  width: 124px;
+  height: 220px;
+  background: linear-gradient(180deg, var(--c-lampGlow), transparent 85%);
+  opacity: 0.16;
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+}
+
+/* Ventana calida: la comunidad. Contrasta a proposito con el neon frio. */
+.stage__ventana {
+  position: absolute;
+  right: 8%;
+  top: 30%;
+  width: 92px;
+  height: 56px;
+  background: var(--c-comunidad);
+  opacity: 0.75;
+  box-shadow: 0 0 24px var(--c-lamp);
+}
+
+.stage__acera {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 22%;
+  background: linear-gradient(180deg, var(--c-sceneNear), var(--c-sceneSky));
+}
+
+.stage__figura {
+  position: absolute;
+  left: 28%;
+  bottom: 18%;
+  width: 22px;
+  height: 74px;
+  background: var(--c-sceneSky);
+  border-top: 6px solid var(--c-alcance);
+}
+
+.stage__lluvia {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    102deg,
+    transparent 0 22px,
+    var(--c-rain) 22px 23px,
+    transparent 23px 40px
+  );
+  opacity: 0.1;
+  animation: llover 0.7s linear infinite;
+}
+
+@keyframes llover {
+  to {
+    transform: translate(-40px, 40px);
+  }
+}
+
+/* Webcam en esquina: el estado del creador, siempre a la vista. */
+.webcam {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  margin: 0;
+  border: 2px solid var(--c-border);
+  background: var(--c-bgPanel);
+  line-height: 0;
+}
+
+.webcam img {
+  image-rendering: pixelated;
+  display: block;
+}
+
+.webcam[data-cansado="true"] {
+  border-color: var(--c-fatiga);
+  filter: saturate(0.6) brightness(0.8);
+}
+
+/* ---------- Controles ---------- */
+.controles {
+  grid-column: 1;
+  background: var(--c-bg);
+  padding: var(--space-2) var(--space-4) var(--space-3);
+}
+
+.controles__barra {
+  height: 4px;
+  background: var(--c-border);
+  margin-bottom: var(--space-3);
+}
+
+.controles__progreso {
+  height: 100%;
+  background: var(--c-accent);
+}
+
+.controles__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.controles__icono {
+  font-family: var(--font-data);
+  font-size: 13px;
+  border: none;
+  background: none;
+  padding: var(--space-1) var(--space-2);
+}
+
+.controles__tiempo {
+  color: var(--c-textMuted);
+  font-size: 12px;
+}
+
+.controles__derecha {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.controles__publicar {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-textBright);
+}
+
+.controles__clip {
+  border-color: var(--c-border);
+  color: var(--c-textDim);
+}
+
+/* Solo grita cuando de verdad hay algo que capturar. */
+.controles__clip[data-activo="true"] {
+  border-color: var(--c-alcance);
+  color: var(--c-alcance);
+  box-shadow: 0 0 14px var(--c-glow);
+  animation: latido 0.9s ease-in-out infinite;
+}
+
+.controles__clip[data-bonus="true"] {
+  border-color: var(--c-hype);
+  color: var(--c-hype);
+}
+
+@keyframes latido {
+  50% {
+    box-shadow: 0 0 26px var(--c-glow);
+  }
+}
+
+/* ---------- Chat ---------- */
+.chat {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--c-bgPanel);
+  border-left: 1px solid var(--c-border);
+  min-height: 0;
+}
+
+.chat__cabecera {
+  background: var(--c-bgRaised);
+  padding: var(--space-3);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.chat__mensajes {
+  overflow-y: auto;
+  padding: var(--space-2);
+  min-height: 0;
+  scrollbar-width: thin;
+}
+
+.chat__vacio {
+  color: var(--c-textDim);
+  font-size: 13px;
+  text-align: center;
+  margin-top: var(--space-6);
+}
+
+.chat__linea {
+  margin: 0;
+  padding: 3px var(--space-2);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  color: var(--c-text);
+}
+
+.chat__nick {
+  font-weight: 700;
+}
+
+.chat__sep {
+  color: var(--c-textDim);
+}
+
+/* Las suscripciones destacan: son comunidad, no ruido. */
+.chat__linea--sub,
+.chat__linea--resub {
+  background: var(--c-bgRaised);
+  border-left: 2px solid var(--c-comunidad);
+  color: var(--c-textBright);
+}
+
+.chat__linea--emote .chat__texto {
+  color: var(--c-ideas);
+  font-weight: 600;
+}
+
+.chat__pie {
+  padding: var(--space-3);
+  border-top: 1px solid var(--c-border);
+  font-size: 12px;
+  color: var(--c-comunidad);
+  text-align: center;
+}
+
+/* ---------- Panel de recursos ---------- */
+.stats {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+}
+
+.stat__label {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.stat__valor {
+  color: var(--c-textBright);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chat {
+    grid-column: 1;
+    grid-row: auto;
+    border-left: none;
+    border-top: 1px solid var(--c-border);
+    max-height: 40vh;
+  }
+}

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createInitialState, normalizeAllocation, type Allocation, type GameState } from './sim/state.ts'
 import { publicar, step } from './sim/tick.ts'
+import { clipCatch } from './sim/clip.ts'
 
 interface GameStore {
   game: GameState
@@ -14,6 +15,7 @@ interface GameStore {
 
   advance: (dtMs: number) => void
   publish: () => void
+  catchClip: () => void
   setAllocation: (a: Allocation) => void
   setSpeed: (m: number) => void
   setPaused: (p: boolean) => void
@@ -28,6 +30,11 @@ export const useGame = create<GameStore>((set) => ({
   advance: (dtMs) =>
     set((s) => (s.paused ? s : { game: step(s.game, dtMs * s.speedMultiplier) })),
   publish: () => set((s) => ({ game: publicar(s.game) })),
+  catchClip: () =>
+    set((s) => {
+      const r = clipCatch(s.game.clip, s.game.rng)
+      return { game: { ...s.game, clip: r.clip, rng: r.rng } }
+    }),
   setAllocation: (a) =>
     set((s) => ({ game: { ...s.game, allocation: normalizeAllocation(a) } })),
   setSpeed: (m) => set({ speedMultiplier: m }),

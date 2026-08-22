@@ -24,9 +24,9 @@ describe('regla de paleta', () => {
   it('ningun hex fuera de palette.ts', () => {
     const infractores: string[] = []
 
-    for (const file of walk(SRC)) {
+    for (const file of [...walk(SRC), join(ROOT, 'index.html')]) {
       if (file === PALETTE_FILE) continue
-      if (!/\.(ts|tsx|css)$/.test(file)) continue
+      if (!/\.(ts|tsx|css|html)$/.test(file)) continue
 
       const matches = readFileSync(file, 'utf8').match(HEX)
       if (matches) infractores.push(`${relative(ROOT, file)}: ${matches.join(', ')}`)
