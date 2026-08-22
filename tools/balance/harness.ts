@@ -4,6 +4,7 @@ import { TUNABLES } from '../../src/sim/tunables.ts'
 import { calcResidualTotal } from '../../src/sim/formulas.ts'
 import { siguienteCompra, type Bot } from './bots.ts'
 import { comprar } from '../../src/sim/shop.ts'
+import { resolver } from '../../src/sim/lifeEvents.ts'
 
 export interface RunResult {
   botId: string
@@ -51,6 +52,12 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
   let compras = 0
 
   for (let i = 0; i < maxTicks; i++) {
+    // Las tarjetas de vida detienen la simulacion hasta que alguien conteste.
+    // Los bots eligen siempre la primera opcion: no se trata de optimizarlas
+    // —el GDD dice explicitamente que dan sabor, no progresion— sino de que
+    // la partida no se quede congelada.
+    if (s.eventoPendiente) s = resolver(s, s.eventoPendiente, 0)
+
     // Comprar primero: en los ciclos 1-2 la compra es lo que mueve el reparto.
     if (!bot.compra || bot.compra(s)) {
       const id = siguienteCompra(s, bot.prioridad)

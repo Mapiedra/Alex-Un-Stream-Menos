@@ -10,10 +10,10 @@ import { runBot } from '../tools/balance/harness.ts'
  * de llegar a nadie. Es la unica forma de que "el streaming intenso debe ganar
  * a corto plazo y perder a medio" sea algo mas que una frase en un documento.
  *
- * ESTADO: las gates narrativas de la victoria (comunidad minima, casa, unas
- * vacaciones, un evento extraordinario) son de F3 y F4 y todavia no existen.
- * Hasta entonces el retiro se decide solo por economia, asi que la banda de
- * duracion es provisional y mas ancha de lo que sera al final.
+ * ESTADO: con las etapas de casa de F3 —cada una encarece el coste de vida—
+ * la partida equilibrada ya cae dentro de la banda objetivo de 90-160 min. La
+ * banda del test es algo mas ancha porque F4 (vacaciones y eventos
+ * extraordinarios) volvera a moverla, y se estrechara del todo en F6.
  */
 
 const bot = (id: string) => {
@@ -81,12 +81,21 @@ describe('la economia del retiro no es trivial', () => {
 })
 
 describe('duracion de la partida', () => {
-  it('la partida equilibrada dura una banda razonable de simulacion', () => {
-    // Banda PROVISIONAL. El objetivo final es 90-160 min, y se estrechara en
-    // F6 cuando existan las gates narrativas que retrasan la victoria.
+  it('la partida equilibrada dura lo que deberia durar', () => {
+    // Objetivo del GDD: ~2 horas. La banda del test es algo mas ancha porque
+    // F4 volvera a mover la cifra al anadir vacaciones y eventos.
     const min = equilibrado.retiroEnMinuto ?? 0
-    expect(min).toBeGreaterThan(45)
-    expect(min).toBeLessThan(200)
+    expect(min).toBeGreaterThan(80)
+    expect(min).toBeLessThan(180)
+  })
+
+  it('dejar que las compras decidan tus horas tambien llega a buen puerto', () => {
+    // El bot "derivado" nunca toca el reparto: juega como el jugador de los
+    // ciclos 1-2, que solo compra. Tarda mas que el equilibrado, pero llega.
+    // Si dejara de llegar, la primera mitad de la partida seria un callejon.
+    const derivado = correr('derivado')
+    expect(derivado.retiroEnMinuto).not.toBeNull()
+    expect(derivado.retiroEnMinuto ?? 0).toBeGreaterThan(equilibrado.retiroEnMinuto ?? 0)
   })
 
   it('ninguna politica se retira en los primeros veinte minutos', () => {

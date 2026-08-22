@@ -3,6 +3,7 @@ import { createInitialState, normalizeAllocation, type Allocation, type GameStat
 import { cambiarFormato, publicar, step } from './sim/tick.ts'
 import { clipCatch } from './sim/clip.ts'
 import { comprar, desbloquearReparto } from './sim/shop.ts'
+import { resolver } from './sim/lifeEvents.ts'
 import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
 
 /** Cada cuantos ms de tiempo real se autoguarda. */
@@ -25,6 +26,7 @@ interface GameStore {
   catchClip: () => void
   buy: (id: string) => void
   setFormato: (id: string) => void
+  resolverEvento: (opcion: number) => void
   unlockAllocation: () => void
   setAllocation: (a: Allocation) => void
   setSpeed: (m: number) => void
@@ -95,6 +97,17 @@ export const useGame = create<GameStore>((set, get) => ({
     set((s) => {
       const game = cambiarFormato(s.game, id)
       if (game !== s.game) guardar(game)
+      return { game }
+    }),
+
+  // Resolver la tarjeta reanuda la partida: el tick vuelve a correr en cuanto
+  // eventoPendiente deja de ser null.
+  resolverEvento: (opcion) =>
+    set((s) => {
+      const id = s.game.eventoPendiente
+      if (!id) return s
+      const game = resolver(s.game, id, opcion)
+      guardar(game)
       return { game }
     }),
 

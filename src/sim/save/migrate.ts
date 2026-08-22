@@ -55,6 +55,19 @@ export const MIGRACIONES: Record<number, Migracion> = {
     historial: crearHistorial(),
     schemaVersion: 4,
   }),
+
+  /**
+   * v4 -> v5: aparecen las tarjetas de vida. Una partida vieja empieza con la
+   * baraja entera por ver y sin modificadores activos.
+   */
+  4: (s) => ({
+    ...s,
+    eventoPendiente: null,
+    eventosVistos: [],
+    ultimoEventoSemana: typeof s['week'] === 'number' ? s['week'] : 0,
+    modificadores: [],
+    schemaVersion: 5,
+  }),
 }
 
 export class SaveIncompatible extends Error {}

@@ -13,6 +13,13 @@ import { houseLivingCost, type GameState } from './state.ts'
 import { CHAT_BUFFER, chatStep } from './chat.ts'
 import { CONTENT_POR_ID, FORMATO_INICIAL } from '../content/contentTypes.ts'
 import { muestrear } from './historial.ts'
+import { avanzarCiclo, puedeAvanzar } from './cycles.ts'
+import {
+  SEMANAS_ENTRE_EVENTOS,
+  caducarModificadores,
+  multModificadores,
+  sortear,
+} from './lifeEvents.ts'
 import { clipMultiplier, clipStep } from './clip.ts'
 
 /**
@@ -26,6 +33,10 @@ import { clipMultiplier, clipStep } from './clip.ts'
 export function step(state: GameState, dtMs: number): GameState {
   const dt = (dtMs / 1000) * TUNABLES.gameSpeed
   if (dt <= 0) return state
+
+  // Con una tarjeta de vida en pantalla la partida se detiene: el tiempo que
+  // el jugador dedica a leer no debe consumir su partida.
+  if (state.eventoPendiente) return state
 
   const alloc = state.allocation
   // El formato decide en que se convierte el trabajo. Si el guardado trae uno
@@ -42,8 +53,12 @@ export function step(state: GameState, dtMs: number): GameState {
    */
   const horasDelFormato = alloc[formato.actividad]
 
+  // --- Modificadores temporales de las tarjetas de vida -------------------
+  const modificadores = caducarModificadores(state.modificadores, state.week)
+  const mods = multModificadores(modificadores)
+
   // --- Calidad (derivada) -------------------------------------------------
-  const calidad = calcCalidad(state.vida, state.fatiga, state.multCalidad)
+  const calidad = calcCalidad(state.vida, state.fatiga, state.multCalidad * mods.calidad)
 
   // --- Momento clippeable -------------------------------------------------
   const clipRes = clipStep(state.clip, state.rng, dtMs * TUNABLES.gameSpeed)
@@ -52,11 +67,12 @@ export function step(state: GameState, dtMs: number): GameState {
   const produccion = calcProduccion(
     horasDelFormato,
     calidad * formato.calidad,
-    state.multEficiencia * state.legadoEficiencia,
+    state.multEficiencia * state.legadoEficiencia * mods.eficiencia,
     state.hype,
     clipMultiplier(state.clip),
   )
-  const ganancia = produccion * state.multAlcance * formato.alcance * ALCANCE_POR_PRODUCCION
+  const ganancia =
+    produccion * state.multAlcance * mods.alcance * formato.alcance * ALCANCE_POR_PRODUCCION
   const decay = calcAlcanceDecayRate(state.comunidad, state.legadoRetencion)
   const alcance = Math.max(0, state.alcance + (ganancia - state.alcance * decay) * dt)
 
@@ -122,6 +138,23 @@ export function step(state: GameState, dtMs: number): GameState {
       ? [...state.chat, ...chat.mensajes].slice(-CHAT_BUFFER)
       : state.chat
 
+  // --- Tarjeta de vida ----------------------------------------------------
+  // Se sortea al cumplirse el intervalo. La partida se detendra en el
+  // siguiente tick, cuando eventoPendiente deje de ser null.
+  let rngFinal = chat.rng
+  let eventoPendiente = state.eventoPendiente
+  let ultimoEventoSemana = state.ultimoEventoSemana
+  const semanaActual = Math.floor((state.elapsedMs + dtMs * TUNABLES.gameSpeed) / 1000 / TUNABLES.secondsPerWeek)
+
+  if (!eventoPendiente && semanaActual - ultimoEventoSemana >= SEMANAS_ENTRE_EVENTOS) {
+    const sorteo = sortear({ ...state, week: semanaActual }, rngFinal)
+    rngFinal = sorteo.rng
+    if (sorteo.evento) {
+      eventoPendiente = sorteo.evento.id
+      ultimoEventoSemana = semanaActual
+    }
+  }
+
   // --- Historial ----------------------------------------------------------
   const historial = muestrear(state.historial, alcance, comunidad, dt)
 
@@ -129,10 +162,13 @@ export function step(state: GameState, dtMs: number): GameState {
   const elapsedMs = state.elapsedMs + dtMs * TUNABLES.gameSpeed
   const week = Math.floor(elapsedMs / 1000 / TUNABLES.secondsPerWeek)
 
-  return {
+  const siguiente: GameState = {
     ...state,
-    rng: chat.rng,
+    rng: rngFinal,
     clip: clipRes.clip,
+    modificadores,
+    eventoPendiente,
+    ultimoEventoSemana,
     historial,
     chat: mensajes,
     chatNextId: chat.nextId,
@@ -149,6 +185,10 @@ export function step(state: GameState, dtMs: number): GameState {
     ahorros,
     ingresosPorSegundo,
   }
+
+  // El avance de ciclo es automatico: cuando has llegado, has llegado. No es
+  // una prueba que se pueda fallar, es un termometro de la carrera.
+  return puedeAvanzar(siguiente) ? avanzarCiclo(siguiente) : siguiente
 }
 
 /**

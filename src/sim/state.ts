@@ -3,13 +3,15 @@ import type { ChatMessage } from './chat.ts'
 import { createClipState, type ClipState } from './clip.ts'
 import { FORMATO_INICIAL } from '../content/contentTypes.ts'
 import { crearHistorial, type Historial } from './historial.ts'
+import { houseStage } from '../content/houseStages.ts'
+import type { ModificadorActivo } from './lifeEvents.ts'
 import { TUNABLES } from './tunables.ts'
 
 /**
  * Version del formato de guardado. Se sube cada vez que GameState cambia de
  * forma, y se anade la migracion correspondiente en save/migrate.ts.
  */
-export const SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = 5
 
 /**
  * Reparto del tiempo del creador. Siempre suma 1.
@@ -69,6 +71,18 @@ export interface GameState {
 
   /** El unico clicker del juego. Nunca obligatorio. */
   clip: ClipState
+
+  /**
+   * Tarjeta de vida esperando respuesta. Mientras no sea null, la simulacion
+   * esta detenida: leer no debe consumir partida.
+   */
+  eventoPendiente: string | null
+  /** Tarjetas ya vistas, para no repetirlas. */
+  eventosVistos: string[]
+  /** Semana en la que salio la ultima tarjeta. */
+  ultimoEventoSemana: number
+  /** Modificadores temporales de las tarjetas resueltas. */
+  modificadores: ModificadorActivo[]
 
   /** Curvas de alcance y comunidad, para que la diferencia se VEA. */
   historial: Historial
@@ -132,6 +146,11 @@ export function createInitialState(seed = 1): GameState {
     formato: FORMATO_INICIAL,
     clip: createClipState(),
 
+    eventoPendiente: null,
+    eventosVistos: [],
+    ultimoEventoSemana: 0,
+    modificadores: [],
+
     historial: crearHistorial(),
 
     chat: [],
@@ -167,12 +186,11 @@ export function createInitialState(seed = 1): GameState {
 /**
  * Coste de vida semanal por etapa de casa.
  *
- * Sube con cada etapa: profesionalizarse mejora la calidad de vida y del
- * contenido, pero encarece retirarse. Esa tension es deliberada.
+ * La cifra vive en content/houseStages.ts, junto a la etapa que la justifica.
+ * Esta funcion queda como el punto de entrada que ya usa medio motor.
  */
 export function houseLivingCost(stage: number): number {
-  const costs = [8, 14, 22, 32, 44, 58]
-  return costs[Math.min(Math.max(stage, 0), costs.length - 1)] ?? 8
+  return houseStage(stage).costeVida
 }
 
 /** Normaliza un reparto para que sume exactamente 1. */

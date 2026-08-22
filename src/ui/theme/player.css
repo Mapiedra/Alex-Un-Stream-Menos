@@ -86,7 +86,7 @@
   font-weight: 600;
 }
 
-/* ---------- Escena ---------- */
+/* ---------- Escena: habitacion + calle por la ventana ---------- */
 .stage {
   position: relative;
   overflow: hidden;
@@ -97,135 +97,287 @@
   image-rendering: pixelated;
 }
 
-.stage__cielo {
+.stage__pared {
+  position: absolute;
+  inset: 0 0 26% 0;
+  background: linear-gradient(180deg, var(--c-sceneMid), var(--c-sceneNear));
+}
+
+.stage__suelo {
+  position: absolute;
+  inset: 74% 0 0 0;
+  background: linear-gradient(180deg, var(--c-sceneEdge), var(--c-sceneSky));
+}
+
+/* ---- La ventana: la calle de la intro, vista desde dentro ---- */
+.calle {
+  position: absolute;
+  left: 6%;
+  top: 12%;
+  width: 34%;
+  height: 46%;
+  overflow: hidden;
+  border: 4px solid var(--c-sceneSky);
+  background: var(--c-sceneSky);
+}
+
+.calle__cielo {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, var(--c-sceneSky), var(--c-sceneFar) 60%, var(--c-sceneMid));
+  background: linear-gradient(180deg, var(--c-sceneSky), var(--c-sceneFar) 70%);
 }
 
-.stage__lejos {
+.calle__edificios {
   position: absolute;
-  inset: auto 0 22% 0;
-  height: 45%;
+  inset: auto 0 0 0;
+  height: 55%;
   background: repeating-linear-gradient(
     90deg,
-    var(--c-sceneMid) 0 38px,
-    var(--c-sceneNear) 38px 44px,
-    var(--c-sceneMid) 44px 96px,
-    var(--c-sceneFar) 96px 104px
+    var(--c-sceneMid) 0 22px,
+    var(--c-sceneNear) 22px 26px,
+    var(--c-sceneMid) 26px 54px,
+    var(--c-sceneFar) 54px 58px
   );
-  opacity: 0.9;
 }
 
-.stage__rotulos {
+.calle__neon {
   position: absolute;
-  inset: 12% auto auto 6%;
-  display: flex;
-  gap: 40px;
-  align-items: flex-start;
-}
-
-.stage__neon {
   display: block;
-  width: 10px;
-  height: 68px;
-  opacity: calc(0.35 + var(--intensidad) * 0.65);
+  width: 5px;
+  /* Los rotulos se encienden con el alcance: la calle esta viva cuando hay
+     gente mirando, y apagada cuando no. */
+  opacity: calc(0.25 + var(--intensidad) * 0.75);
 }
 
-.stage__neon--cian {
+.calle__neon--cian {
+  left: 18%;
+  top: 22%;
+  height: 34%;
   background: var(--c-alcance);
-  box-shadow: 0 0 12px var(--c-glow);
+  box-shadow: 0 0 10px var(--c-glow);
 }
 
-.stage__neon--rosa {
+.calle__neon--rosa {
+  left: 34%;
+  top: 30%;
+  height: 24%;
   background: var(--c-hype);
-  box-shadow: 0 0 12px var(--c-glowAlt);
-  height: 44px;
+  box-shadow: 0 0 10px var(--c-glowAlt);
 }
 
-.stage__neon--verde {
-  background: var(--c-vida);
-  box-shadow: 0 0 10px var(--c-vida);
-  height: 30px;
-}
-
-/* La farola y su cono volumetrico: el foco de atencion de la referencia. */
-.stage__farola {
+.calle__farola {
   position: absolute;
   right: 22%;
-  top: 8%;
-  bottom: 22%;
-  width: 3px;
+  top: 18%;
+  bottom: 0;
+  width: 2px;
   background: var(--c-sceneEdge);
 }
 
-.stage__bombilla {
+.calle__bombilla {
   position: absolute;
   top: 0;
-  left: -13px;
-  width: 30px;
-  height: 9px;
+  left: -7px;
+  width: 16px;
+  height: 5px;
   background: var(--c-lampGlow);
-  box-shadow: 0 0 18px var(--c-lamp);
+  box-shadow: 0 0 12px var(--c-lamp);
 }
 
-.stage__cono {
+.calle__cono {
   position: absolute;
-  top: 9px;
-  left: -60px;
-  width: 124px;
-  height: 220px;
+  top: 5px;
+  left: -30px;
+  width: 62px;
+  height: 100%;
   background: linear-gradient(180deg, var(--c-lampGlow), transparent 85%);
-  opacity: 0.16;
+  opacity: 0.18;
   clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
 }
 
-/* Ventana calida: la comunidad. Contrasta a proposito con el neon frio. */
-.stage__ventana {
-  position: absolute;
-  right: 8%;
-  top: 30%;
-  width: 92px;
-  height: 56px;
-  background: var(--c-comunidad);
-  opacity: 0.75;
-  box-shadow: 0 0 24px var(--c-lamp);
-}
-
-.stage__acera {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 22%;
-  background: linear-gradient(180deg, var(--c-sceneNear), var(--c-sceneSky));
-}
-
-.stage__figura {
-  position: absolute;
-  left: 28%;
-  bottom: 18%;
-  width: 22px;
-  height: 74px;
-  background: var(--c-sceneSky);
-  border-top: 6px solid var(--c-alcance);
-}
-
-.stage__lluvia {
+.calle__lluvia {
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     102deg,
-    transparent 0 22px,
-    var(--c-rain) 22px 23px,
-    transparent 23px 40px
+    transparent 0 14px,
+    var(--c-rain) 14px 15px,
+    transparent 15px 26px
   );
-  opacity: 0.1;
+  opacity: 0.14;
   animation: llover 0.7s linear infinite;
 }
 
 @keyframes llover {
   to {
-    transform: translate(-40px, 40px);
+    transform: translate(-26px, 26px);
   }
+}
+
+/* ---- Mobiliario: cada objeto es su propia capa ----
+   Placeholder de bloques hasta que lleguen los sprites del lote L1. Que cada
+   objeto sea un elemento independiente es lo que permite sustituirlos uno a
+   uno sin tocar nada mas. */
+.cuarto {
+  position: absolute;
+  inset: 0;
+}
+
+.obj {
+  position: absolute;
+  display: block;
+}
+
+.obj--mesa {
+  left: 46%;
+  top: 60%;
+  width: 30%;
+  height: 5%;
+  background: var(--c-wood, var(--c-sceneEdge));
+  border-top: 3px solid var(--c-lampGlow);
+}
+
+.obj--pc {
+  left: 52%;
+  top: 46%;
+  width: 13%;
+  height: 14%;
+  background: var(--c-bg);
+  border: 2px solid var(--c-alcance);
+  box-shadow: 0 0 16px var(--c-glow);
+}
+
+.obj--pantalla2 {
+  left: 66%;
+  top: 48%;
+  width: 10%;
+  height: 12%;
+  background: var(--c-bg);
+  border: 2px solid var(--c-cyan600, var(--c-borderStrong));
+}
+
+.obj--silla {
+  left: 55%;
+  top: 66%;
+  width: 8%;
+  height: 18%;
+  background: var(--c-sceneSky);
+  border-top: 4px solid var(--c-borderStrong);
+}
+
+.obj--lampara {
+  left: 43%;
+  top: 40%;
+  width: 4%;
+  height: 4%;
+  background: var(--c-lampGlow);
+  box-shadow: 0 0 24px var(--c-lamp);
+}
+
+.obj--micro {
+  left: 49%;
+  top: 52%;
+  width: 2.5%;
+  height: 9%;
+  background: var(--c-borderStrong);
+}
+
+.obj--estanteria {
+  right: 6%;
+  top: 20%;
+  width: 14%;
+  height: 22%;
+  background: var(--c-sceneEdge);
+  border-top: 3px solid var(--c-comunidad);
+  border-bottom: 3px solid var(--c-comunidad);
+}
+
+.obj--paneles {
+  left: 44%;
+  top: 12%;
+  width: 22%;
+  height: 12%;
+  background: var(--c-sceneEdge);
+  opacity: 0.6;
+}
+
+/* La pared de libros: es el objeto que mas dice de la etapa consolidacion. */
+.obj--biblioteca {
+  right: 4%;
+  top: 14%;
+  width: 20%;
+  height: 46%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--c-comunidad) 0 3px,
+    var(--c-sceneEdge) 3px 5px,
+    var(--c-ideas) 5px 8px,
+    var(--c-sceneEdge) 8px 10px
+  );
+  opacity: 0.85;
+}
+
+.obj--sillon {
+  right: 26%;
+  top: 62%;
+  width: 10%;
+  height: 14%;
+  background: var(--c-sceneEdge);
+  border-top: 4px solid var(--c-vida);
+}
+
+.obj--planta {
+  left: 40%;
+  top: 66%;
+  width: 4%;
+  height: 12%;
+  background: var(--c-vida);
+  opacity: 0.7;
+}
+
+.obj--cocina {
+  left: 4%;
+  top: 62%;
+  width: 18%;
+  height: 14%;
+  background: var(--c-sceneEdge);
+  border-top: 4px solid var(--c-lampGlow);
+}
+
+.obj--sofa {
+  left: 24%;
+  top: 68%;
+  width: 16%;
+  height: 10%;
+  background: var(--c-sceneNear);
+  border-top: 4px solid var(--c-hype);
+}
+
+.obj--consola {
+  left: 30%;
+  top: 63%;
+  width: 5%;
+  height: 3%;
+  background: var(--c-calidad);
+}
+
+.obj--cuadros {
+  left: 44%;
+  top: 6%;
+  width: 20%;
+  height: 5%;
+  background: var(--c-ingresos);
+  opacity: 0.5;
+}
+
+/* El gato de la referencia. Es canon del GDD, no un adorno. */
+.obj--gato {
+  left: 58%;
+  top: 56%;
+  width: 5%;
+  height: 4%;
+  background: var(--c-skin, var(--c-lampGlow));
+  border-radius: 40% 40% 0 0;
 }
 
 /* Webcam en esquina: el estado del creador, siempre a la vista. */
@@ -665,4 +817,231 @@
 .perfil__relleno {
   display: block;
   height: 100%;
+}
+
+/* ---------- Tarjeta de vida ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--c-bg);
+  /* Se ve la partida detras, pero atenuada: sigue ahi, solo esta en pausa. */
+  background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+  z-index: 10;
+}
+
+.tarjeta {
+  max-width: 460px;
+  background: var(--c-bgPanel);
+  border: 2px solid var(--c-accent);
+  padding: var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.tarjeta__titulo {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: var(--px-16);
+  color: var(--c-textBright);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tarjeta__texto {
+  margin: 0;
+  color: var(--c-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tarjeta__opciones {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.tarjeta__opcion {
+  font-family: var(--font-data);
+  font-size: 13px;
+  text-transform: none;
+  text-align: left;
+  padding: var(--space-3);
+}
+
+.tarjeta__nota {
+  margin: 0;
+  font-size: 11px;
+  color: var(--c-textDim);
+  text-align: center;
+}
+
+/* ---------- Carrera: ciclo y casa ---------- */
+.carrera {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  padding: var(--space-4);
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+}
+
+.carrera__kicker {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+
+.carrera__titulo {
+  margin: 2px 0 var(--space-1);
+  font-size: 16px;
+  color: var(--c-textBright);
+}
+
+.carrera__objetivo {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  color: var(--c-textMuted);
+  line-height: 1.4;
+}
+
+.carrera__coste {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-fatiga);
+}
+
+.requisitos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.requisito {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--c-textMuted);
+}
+
+.requisito[data-cumplido="true"] {
+  color: var(--c-positive);
+}
+
+.requisito__marca {
+  text-align: center;
+}
+
+.requisito__progreso {
+  color: var(--c-textDim);
+  font-size: 11px;
+}
+
+.modificadores {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.modificador {
+  font-size: 11px;
+  color: var(--c-calidad);
+  border: 1px solid var(--c-border);
+  padding: 2px var(--space-2);
+}
+
+.modificador__semanas {
+  color: var(--c-textDim);
+}
+
+/* ---------- Reparto de horas ---------- */
+.reparto {
+  padding: var(--space-4);
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+}
+
+.reparto__titulo {
+  margin: 0 0 var(--space-1);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--c-textMuted);
+}
+
+.reparto__aviso {
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+  color: var(--c-textDim);
+  max-width: 70ch;
+  line-height: 1.4;
+}
+
+.reparto__controles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-4);
+}
+
+.franja {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.franja__cabecera {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.franja__pct {
+  color: var(--c-textBright);
+}
+
+.franja__control {
+  width: 100%;
+  accent-color: var(--c-accent);
+}
+
+.reparto__barras {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 520px;
+}
+
+.franja__pista {
+  position: relative;
+  display: block;
+  height: 18px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+}
+
+.franja__relleno {
+  display: block;
+  height: 100%;
+  opacity: 0.65;
+}
+
+.franja__leyenda {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: var(--space-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-textBright);
 }

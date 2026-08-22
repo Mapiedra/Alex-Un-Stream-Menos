@@ -6,6 +6,9 @@ import { ControlBar } from './ui/player/ControlBar.tsx'
 import { ChatPanel } from './ui/player/ChatPanel.tsx'
 import { Tienda } from './ui/panels/Tienda.tsx'
 import { Formatos } from './ui/panels/Formatos.tsx'
+import { Carrera } from './ui/panels/Carrera.tsx'
+import { Reparto } from './ui/panels/Reparto.tsx'
+import { TarjetaVida } from './ui/panels/TarjetaVida.tsx'
 import { Sparkline } from './ui/components/Sparkline.tsx'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
@@ -61,7 +64,12 @@ export function App() {
             enDirecto={!paused}
           />
 
-          <Stage intensidad={intensidad} fatiga={g.fatiga} lloviendo />
+          <Stage
+            intensidad={intensidad}
+            fatiga={g.fatiga}
+            etapaCasa={g.houseStage}
+            lloviendo
+          />
 
           <ControlBar
             enPausa={paused}
@@ -104,11 +112,17 @@ export function App() {
         <Stat label="Clips" valor={`${g.clip.acertados}`} token="alcance" hint="Momentos capturados. Fallarlos no cuesta progreso: la partida es ganable sin acertar ninguno." />
       </div>
 
+      <Carrera />
+
+      <Reparto />
+
       <Formatos />
 
       <Tienda />
 
       <DevPanel />
+
+      <TarjetaVida />
     </div>
   )
 }

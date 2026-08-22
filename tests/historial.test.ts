@@ -9,7 +9,25 @@ import {
 } from '../src/sim/historial.ts'
 import { createInitialState } from '../src/sim/state.ts'
 import { cambiarFormato, step } from '../src/sim/tick.ts'
+import { resolver } from '../src/sim/lifeEvents.ts'
 import { TUNABLES } from '../src/sim/tunables.ts'
+import type { GameState } from '../src/sim/state.ts'
+
+/**
+ * Avanza la simulacion contestando las tarjetas de vida.
+ *
+ * Sin esto la partida se congela en la primera tarjeta: es el comportamiento
+ * correcto del juego —leer no consume partida— pero en un test hay que hacer
+ * el papel del jugador que contesta.
+ */
+function avanzar(s: GameState, ticks: number): GameState {
+  let actual = s
+  for (let i = 0; i < ticks; i++) {
+    if (actual.eventoPendiente) actual = resolver(actual, actual.eventoPendiente, 0)
+    actual = step(actual, TUNABLES.tickMs)
+  }
+  return actual
+}
 
 describe('muestreo', () => {
   it('no toma muestra antes de tiempo', () => {
@@ -95,7 +113,7 @@ describe('la tesis del juego, medida en las curvas', () => {
     let s = cambiarFormato(createInitialState(11), 'popular')
     // Fase 1: producir a tope hasta tener alcance y algo de comunidad.
     s = { ...s, allocation: { produccion: 0.8, comunidad: 0.2, vida: 0, descanso: 0 } }
-    for (let i = 0; i < 4000; i++) s = step(s, TUNABLES.tickMs)
+    s = avanzar(s, 4000)
 
     const alcancePico = s.alcance
     const comunidadPico = s.comunidad
@@ -104,7 +122,7 @@ describe('la tesis del juego, medida en las curvas', () => {
 
     // Fase 2: parar del todo.
     s = { ...s, allocation: { produccion: 0, comunidad: 0, vida: 0.5, descanso: 0.5 } }
-    for (let i = 0; i < 3000; i++) s = step(s, TUNABLES.tickMs)
+    s = avanzar(s, 3000)
 
     const caidaAlcance = 1 - s.alcance / alcancePico
     const caidaComunidad = 1 - s.comunidad / comunidadPico
@@ -115,8 +133,7 @@ describe('la tesis del juego, medida en las curvas', () => {
   })
 
   it('la partida acumula curva sin desbordar el estado', () => {
-    let s = createInitialState()
-    for (let i = 0; i < 6000; i++) s = step(s, TUNABLES.tickMs)
+    const s = avanzar(createInitialState(), 6000)
     expect(s.historial.alcance.length).toBeGreaterThan(1)
     expect(s.historial.alcance.length).toBeLessThanOrEqual(MUESTRAS)
   })
