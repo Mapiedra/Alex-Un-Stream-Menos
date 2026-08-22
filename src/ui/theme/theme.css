@@ -128,7 +128,7 @@ button:disabled {
 }
 
 /* Filtro CRT: capricho, apagado por defecto. */
-:root[data-crt='true'] .stage::after {
+:root[data-crt='true'] .stage__marco::after {
   content: '';
   position: absolute;
   inset: 0;

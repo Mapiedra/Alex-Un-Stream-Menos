@@ -8,17 +8,27 @@
 
 /* ---------- Bloque del reproductor ----------
    Proporciones de la referencia: video 16:9 a la izquierda y chat de ancho
-   fijo a la derecha, ambos a la misma altura. */
+   fijo a la derecha, ambos exactamente a la misma altura.
+
+   El bloque ocupa el viewport y ni un pixel mas. Es la pieza que arregla los
+   tres problemas que tenia: sin una altura definida, la fila la dimensionaba
+   el CHAT —que crece con sus mensajes—, asi que el video se estiraba hasta
+   desbordar la pantalla y quedaba un hueco muerto debajo. Con la altura fija,
+   manda el reproductor y el chat se ajusta a el. */
 .reproductor {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--ancho-chat);
   align-items: stretch;
+  /* dvh y no vh: en movil la barra del navegador se come parte del vh. */
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .reproductor__principal {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 /* ---------- Cabecera ---------- */
@@ -87,13 +97,33 @@
 }
 
 /* ---------- Escena: habitacion + calle por la ventana ---------- */
+
+/* Caja exterior: rellena lo que quede entre la cabecera y los controles.
+   Es contenedor de consulta para que el marco pueda calcular su ancho a
+   partir del alto disponible. */
 .stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  container-type: size;
+  /* Fondo de las bandas, como el negro de un reproductor. */
+  background: var(--c-bg);
+}
+
+/* Marco: aqui vive el 16:9. Se centra y nunca se sale de su caja.
+   El ancho es el menor entre "todo el ancho disponible" y "el que le
+   corresponde al alto disponible en 16:9". Con `width: 100%` a secas el
+   aspect-ratio se ignoraba en cuanto la altura recortaba, y el video salia
+   deformado a 2.5:1 en pantallas bajas. */
+.stage__marco {
   position: relative;
+  aspect-ratio: 16 / 9;
+  width: min(100%, calc(100cqh * 16 / 9));
+  max-height: 100%;
   overflow: hidden;
   background: var(--c-sceneSky);
-  /* Proporcion del video, intacta. Es lo que fija la altura del bloque
-     entero, chat incluido. */
-  aspect-ratio: 16 / 9;
   image-rendering: pixelated;
 }
 
@@ -479,9 +509,13 @@
   grid-template-rows: auto 1fr auto;
   background: var(--c-bgPanel);
   border-left: 1px solid var(--c-border);
+  /* Las dos claves para que el chat NO estire la fila: min-height 0 le
+     permite encogerse por debajo de su contenido, y el scroll interno de
+     .chat__mensajes absorbe el resto. Sin esto, cada mensaje nuevo hacia
+     crecer el bloque entero. */
   min-height: 0;
-  /* El unico scroll interno de la pagina: el historial del chat. */
-  max-height: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .chat__cabecera {
@@ -572,14 +606,30 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* En pantallas estrechas el chat pasa debajo del video, y entonces el bloque
+   ya no puede ocupar el viewport entero: se deja crecer y que la pagina haga
+   scroll, que es lo que hace la version movil de cualquier reproductor. */
 @media (max-width: 900px) {
   .reproductor {
     grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    overflow: visible;
+  }
+
+  .stage {
+    /* Sin altura que repartir, manda el ancho: el marco define el alto. */
+    display: block;
+    container-type: normal;
+  }
+
+  .stage__marco {
+    width: 100%;
   }
 
   .chat {
     border-left: none;
     border-top: 1px solid var(--c-border);
+    height: auto;
     max-height: 50vh;
   }
 }

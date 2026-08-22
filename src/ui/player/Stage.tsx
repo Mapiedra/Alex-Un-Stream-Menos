@@ -29,51 +29,58 @@ export function Stage({ intensidad, fatiga, etapaCasa, lloviendo }: Props) {
   const tiene = (id: string) => objetos.has(id)
 
   return (
-    <div
-      className="stage"
-      style={{ '--intensidad': intensidad } as React.CSSProperties}
-      data-etapa={etapaCasa}
-    >
-      {/* Fondo de la habitacion */}
-      <div className="stage__pared" />
-      <div className="stage__suelo" />
+    // La caja exterior rellena el hueco que le deje el reproductor; el marco
+    // de dentro mantiene el 16:9 y se centra. Es lo que hace un reproductor de
+    // verdad: si sobra ancho pone bandas a los lados, y si sobra alto, arriba
+    // y abajo. Antes el 16:9 estaba en la caja exterior y por eso el video
+    // crecia hasta desbordar la pantalla.
+    <div className="stage">
+      <div
+        className="stage__marco"
+        style={{ '--intensidad': intensidad } as React.CSSProperties}
+        data-etapa={etapaCasa}
+      >
+        {/* Fondo de la habitacion */}
+        <div className="stage__pared" />
+        <div className="stage__suelo" />
 
-      {/* La ventana: la calle de la intro, vista desde dentro */}
-      <div className="calle" title="Ahi fuera esta el alcance: ruidoso, frio y no lo controlas">
-        <span className="calle__cielo" />
-        <span className="calle__edificios" />
-        <span className="calle__neon calle__neon--cian" />
-        <span className="calle__neon calle__neon--rosa" />
-        <span className="calle__farola">
-          <span className="calle__bombilla" />
-          <span className="calle__cono" />
-        </span>
-        {lloviendo && <span className="calle__lluvia" aria-hidden />}
+        {/* La ventana: la calle de la intro, vista desde dentro */}
+        <div className="calle" title="Ahi fuera esta el alcance: ruidoso, frio y no lo controlas">
+          <span className="calle__cielo" />
+          <span className="calle__edificios" />
+          <span className="calle__neon calle__neon--cian" />
+          <span className="calle__neon calle__neon--rosa" />
+          <span className="calle__farola">
+            <span className="calle__bombilla" />
+            <span className="calle__cono" />
+          </span>
+          {lloviendo && <span className="calle__lluvia" aria-hidden />}
+        </div>
+
+        {/* Mobiliario: aparece segun la etapa de casa. Cada objeto, una capa. */}
+        <div className="cuarto">
+          {tiene('mesa') && <span className="obj obj--mesa" title="La mesa" />}
+          {tiene('pc') && <span className="obj obj--pc" title="El PC" />}
+          {tiene('silla') && <span className="obj obj--silla" title="La silla buena" />}
+          {tiene('lampara') && <span className="obj obj--lampara" title="Luz calida" />}
+          {tiene('estanteria') && <span className="obj obj--estanteria" title="La estanteria" />}
+          {tiene('segundaPantalla') && <span className="obj obj--pantalla2" title="Segunda pantalla" />}
+          {tiene('micro') && <span className="obj obj--micro" title="El micro" />}
+          {tiene('panelesAcusticos') && <span className="obj obj--paneles" title="Paneles acusticos" />}
+          {tiene('biblioteca') && <span className="obj obj--biblioteca" title="La pared de libros" />}
+          {tiene('sillon') && <span className="obj obj--sillon" title="El sillon de leer" />}
+          {tiene('planta') && <span className="obj obj--planta" title="Una planta" />}
+          {tiene('cocina') && <span className="obj obj--cocina" title="La cocina" />}
+          {tiene('sofa') && <span className="obj obj--sofa" title="El sofa" />}
+          {tiene('consola') && <span className="obj obj--consola" title="La consola" />}
+          {tiene('cuadros') && <span className="obj obj--cuadros" title="Cuadros" />}
+          {tiene('gato') && <span className="obj obj--gato" title="El gato" />}
+        </div>
+
+        <figure className="webcam" data-cansado={fatiga > 0.6}>
+          <img src={avatar} alt="El creador, en camara" width={96} height={96} />
+        </figure>
       </div>
-
-      {/* Mobiliario: aparece segun la etapa de casa. Cada objeto, una capa. */}
-      <div className="cuarto">
-        {tiene('mesa') && <span className="obj obj--mesa" title="La mesa" />}
-        {tiene('pc') && <span className="obj obj--pc" title="El PC" />}
-        {tiene('silla') && <span className="obj obj--silla" title="La silla buena" />}
-        {tiene('lampara') && <span className="obj obj--lampara" title="Luz calida" />}
-        {tiene('estanteria') && <span className="obj obj--estanteria" title="La estanteria" />}
-        {tiene('segundaPantalla') && <span className="obj obj--pantalla2" title="Segunda pantalla" />}
-        {tiene('micro') && <span className="obj obj--micro" title="El micro" />}
-        {tiene('panelesAcusticos') && <span className="obj obj--paneles" title="Paneles acusticos" />}
-        {tiene('biblioteca') && <span className="obj obj--biblioteca" title="La pared de libros" />}
-        {tiene('sillon') && <span className="obj obj--sillon" title="El sillon de leer" />}
-        {tiene('planta') && <span className="obj obj--planta" title="Una planta" />}
-        {tiene('cocina') && <span className="obj obj--cocina" title="La cocina" />}
-        {tiene('sofa') && <span className="obj obj--sofa" title="El sofa" />}
-        {tiene('consola') && <span className="obj obj--consola" title="La consola" />}
-        {tiene('cuadros') && <span className="obj obj--cuadros" title="Cuadros" />}
-        {tiene('gato') && <span className="obj obj--gato" title="El gato" />}
-      </div>
-
-      <figure className="webcam" data-cansado={fatiga > 0.6}>
-        <img src={avatar} alt="El creador, en camara" width={96} height={96} />
-      </figure>
     </div>
   )
 }
