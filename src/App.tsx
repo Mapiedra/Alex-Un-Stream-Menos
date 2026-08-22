@@ -5,11 +5,14 @@ import { Stage } from './ui/player/Stage.tsx'
 import { ControlBar } from './ui/player/ControlBar.tsx'
 import { ChatPanel } from './ui/player/ChatPanel.tsx'
 import { Tienda } from './ui/panels/Tienda.tsx'
+import { Formatos } from './ui/panels/Formatos.tsx'
+import { Sparkline } from './ui/components/Sparkline.tsx'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
 import { houseLivingCost } from './sim/state.ts'
 import { TUNABLES } from './sim/tunables.ts'
 import { nivelFatiga } from './sim/formulas.ts'
+import { CONTENT_POR_ID } from './content/contentTypes.ts'
 import type { TokenKey } from './ui/theme/palette.ts'
 
 /**
@@ -38,33 +41,53 @@ export function App() {
   // hay gente mirando y se apaga cuando no.
   const intensidad = Math.min(1, g.alcance / 8000)
   const fatiga = nivelFatiga(g.fatiga)
+  // El titulo del directo lo pone el formato: la cabecera dice en todo momento
+  // que esta haciendo el creador.
+  const formato = CONTENT_POR_ID.get(g.formato)
 
   return (
     <div className="app">
       <GameLoop />
 
-      <PlayerHeader
-        titulo="FRANKENSTEIN de Mary Shelley (1818) y luego un juego de correr"
-        espectadores={g.alcance}
-        enDirecto={!paused}
-      />
+      {/* El reproductor conserva las proporciones de la referencia: video en
+          16:9 y chat a su derecha, a la misma altura. Todo lo demas va debajo
+          y se alcanza haciendo scroll, que arrastra al reproductor hacia
+          arriba igual que en la pagina original. */}
+      <div className="reproductor">
+        <div className="reproductor__principal">
+          <PlayerHeader
+            titulo={formato?.titulo ?? 'En directo'}
+            espectadores={g.alcance}
+            enDirecto={!paused}
+          />
 
-      <Stage intensidad={intensidad} fatiga={g.fatiga} lloviendo />
+          <Stage intensidad={intensidad} fatiga={g.fatiga} lloviendo />
 
-      <ControlBar
-        enPausa={paused}
-        onTogglePausa={() => setPaused(!paused)}
-        progresoSemana={progresoSemana}
-        semana={g.week}
-        ciclo={g.cycle}
-        clipActivo={g.clip.activo}
-        clipBonus={g.clip.bonusRestanteMs > 0}
-        onClip={catchClip}
-        onPublicar={publish}
-      />
+          <ControlBar
+            enPausa={paused}
+            onTogglePausa={() => setPaused(!paused)}
+            progresoSemana={progresoSemana}
+            semana={g.week}
+            ciclo={g.cycle}
+            clipActivo={g.clip.activo}
+            clipBonus={g.clip.bonusRestanteMs > 0}
+            onClip={catchClip}
+            onPublicar={publish}
+          />
+        </div>
+
+        <ChatPanel mensajes={g.chat} suscriptores={g.comunidad} />
+      </div>
 
       {avisoCarga && <p className="aviso aviso--error">{avisoCarga}</p>}
       {fatiga !== 'ok' && <p className="aviso" data-nivel={fatiga}>{AVISO_FATIGA[fatiga]}</p>}
+
+      {/* Las dos curvas, juntas y a la misma altura: es donde se ve que el
+          alcance sube y baja mientras la comunidad sube y se queda. */}
+      <div className="curvas">
+        <Sparkline serie={g.historial.alcance} token="alcance" etiqueta="Alcance" />
+        <Sparkline serie={g.historial.comunidad} token="comunidad" etiqueta="Comunidad" />
+      </div>
 
       <div className="stats">
         <Stat label="Alcance" valor={fmt(g.alcance)} token="alcance" hint="Gente que te descubre ahora. Sube rapido y cae con facilidad; la comunidad frena esa caida." />
@@ -81,11 +104,11 @@ export function App() {
         <Stat label="Clips" valor={`${g.clip.acertados}`} token="alcance" hint="Momentos capturados. Fallarlos no cuesta progreso: la partida es ganable sin acertar ninguno." />
       </div>
 
+      <Formatos />
+
       <Tienda />
 
       <DevPanel />
-
-      <ChatPanel mensajes={g.chat} suscriptores={g.comunidad} />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createInitialState, normalizeAllocation, type Allocation, type GameState } from './sim/state.ts'
-import { publicar, step } from './sim/tick.ts'
+import { cambiarFormato, publicar, step } from './sim/tick.ts'
 import { clipCatch } from './sim/clip.ts'
 import { comprar, desbloquearReparto } from './sim/shop.ts'
 import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
@@ -24,6 +24,7 @@ interface GameStore {
   publish: () => void
   catchClip: () => void
   buy: (id: string) => void
+  setFormato: (id: string) => void
   unlockAllocation: () => void
   setAllocation: (a: Allocation) => void
   setSpeed: (m: number) => void
@@ -85,6 +86,14 @@ export const useGame = create<GameStore>((set, get) => ({
   buy: (id) =>
     set((s) => {
       const game = comprar(s.game, id)
+      if (game !== s.game) guardar(game)
+      return { game }
+    }),
+
+  // Cambiar de formato es la decision estrategica central: se guarda al vuelo.
+  setFormato: (id) =>
+    set((s) => {
+      const game = cambiarFormato(s.game, id)
       if (game !== s.game) guardar(game)
       return { game }
     }),

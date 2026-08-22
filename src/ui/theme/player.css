@@ -2,16 +2,27 @@
    Ningun valor hexadecimal aqui — todo sale de los tokens de palette.ts. */
 
 .app {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  grid-template-rows: auto 1fr auto auto;
-  height: 100%;
   background: var(--c-bg);
+  min-height: 100%;
+}
+
+/* ---------- Bloque del reproductor ----------
+   Proporciones de la referencia: video 16:9 a la izquierda y chat de ancho
+   fijo a la derecha, ambos a la misma altura. */
+.reproductor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--ancho-chat);
+  align-items: stretch;
+}
+
+.reproductor__principal {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 /* ---------- Cabecera ---------- */
 .player-header {
-  grid-column: 1;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -77,11 +88,12 @@
 
 /* ---------- Escena ---------- */
 .stage {
-  grid-column: 1;
   position: relative;
   overflow: hidden;
   background: var(--c-sceneSky);
-  min-height: 340px;
+  /* Proporcion del video, intacta. Es lo que fija la altura del bloque
+     entero, chat incluido. */
+  aspect-ratio: 16 / 9;
   image-rendering: pixelated;
 }
 
@@ -239,7 +251,6 @@
 
 /* ---------- Controles ---------- */
 .controles {
-  grid-column: 1;
   background: var(--c-bg);
   padding: var(--space-2) var(--space-4) var(--space-3);
 }
@@ -312,13 +323,13 @@
 
 /* ---------- Chat ---------- */
 .chat {
-  grid-column: 2;
-  grid-row: 1 / -1;
   display: grid;
   grid-template-rows: auto 1fr auto;
   background: var(--c-bgPanel);
   border-left: 1px solid var(--c-border);
   min-height: 0;
+  /* El unico scroll interno de la pagina: el historial del chat. */
+  max-height: 100%;
 }
 
 .chat__cabecera {
@@ -384,7 +395,6 @@
 
 /* ---------- Panel de recursos ---------- */
 .stats {
-  grid-column: 1;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
   gap: var(--space-3);
@@ -411,22 +421,19 @@
 }
 
 @media (max-width: 900px) {
-  .app {
+  .reproductor {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .chat {
-    grid-column: 1;
-    grid-row: auto;
     border-left: none;
     border-top: 1px solid var(--c-border);
-    max-height: 40vh;
+    max-height: 50vh;
   }
 }
 
 /* ---------- Avisos ---------- */
 .aviso {
-  grid-column: 1;
   margin: 0;
   padding: var(--space-2) var(--space-4);
   font-size: 13px;
@@ -447,7 +454,6 @@
 
 /* ---------- Tienda ---------- */
 .tienda {
-  grid-column: 1;
   background: var(--c-bgPanel);
   border-top: 1px solid var(--c-border);
   min-height: 0;
@@ -489,8 +495,6 @@
   padding: var(--space-2) var(--space-4) var(--space-4);
   display: grid;
   gap: var(--space-2);
-  max-height: 34vh;
-  overflow-y: auto;
 }
 
 .mejora {
@@ -540,4 +544,125 @@
   font-size: 12px;
   text-transform: none;
   white-space: nowrap;
+}
+
+/* ---------- Curvas ---------- */
+.curvas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+}
+
+.spark {
+  display: grid;
+  gap: 2px;
+}
+
+.spark__svg {
+  display: block;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+}
+
+.spark__pie {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.spark__tendencia {
+  font-size: 9px;
+}
+
+/* ---------- Formatos ---------- */
+.formatos {
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.formatos__titulo {
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--c-textMuted);
+  font-weight: 600;
+}
+
+.formatos__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--space-2);
+}
+
+.formato {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: var(--space-2);
+  text-align: left;
+  font-family: var(--font-data);
+  text-transform: none;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  padding: var(--space-3);
+  align-content: start;
+}
+
+.formato[data-activo="true"] {
+  border-color: var(--c-accent);
+  background: var(--c-bgRaised);
+}
+
+.formato:disabled {
+  opacity: 0.45;
+}
+
+.formato__nombre {
+  color: var(--c-textBright);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.formato__desc {
+  color: var(--c-textMuted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.perfil {
+  display: grid;
+  gap: 3px;
+}
+
+.perfil__fila {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.perfil__etiqueta {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-textDim);
+}
+
+.perfil__pista {
+  height: 6px;
+  background: var(--c-border);
+  display: block;
+}
+
+.perfil__relleno {
+  display: block;
+  height: 100%;
 }

@@ -1,13 +1,15 @@
 import { createRng, type RngState } from './rng.ts'
 import type { ChatMessage } from './chat.ts'
 import { createClipState, type ClipState } from './clip.ts'
+import { FORMATO_INICIAL } from '../content/contentTypes.ts'
+import { crearHistorial, type Historial } from './historial.ts'
 import { TUNABLES } from './tunables.ts'
 
 /**
  * Version del formato de guardado. Se sube cada vez que GameState cambia de
  * forma, y se anade la migracion correspondiente en save/migrate.ts.
  */
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 4
 
 /**
  * Reparto del tiempo del creador. Siempre suma 1.
@@ -59,8 +61,17 @@ export interface GameState {
   hype: number
   ideas: number
 
+  /**
+   * Formato de contenido activo. La decision estrategica central: no cambia
+   * cuanto trabajas, cambia en que se convierte tu trabajo.
+   */
+  formato: string
+
   /** El unico clicker del juego. Nunca obligatorio. */
   clip: ClipState
+
+  /** Curvas de alcance y comunidad, para que la diferencia se VEA. */
+  historial: Historial
 
   /** Los ultimos mensajes del chat. La comunidad, hecha visible. */
   chat: ChatMessage[]
@@ -118,7 +129,10 @@ export function createInitialState(seed = 1): GameState {
     hype: 0,
     ideas: 0,
 
+    formato: FORMATO_INICIAL,
     clip: createClipState(),
+
+    historial: crearHistorial(),
 
     chat: [],
     chatNextId: 1,

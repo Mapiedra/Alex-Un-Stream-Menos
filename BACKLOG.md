@@ -35,6 +35,11 @@ extraordinario, y esas gates son de F3 y F4. Cuando existan, el retiro se
 retrasa solo y la banda se estrecha con conocimiento de causa. El test de
 balance asume mientras tanto una banda ancha (45-200) y lo dice.
 
+### Los formatos de evento no se pueden disparar todavia — F4
+`conferencia`, `solidario` y `clip` estan definidos en el catalogo de formatos
+y marcados con `requiere: '@evento'`, de modo que no aparecen entre los
+elegibles. Les falta el sistema que los active: es F4.
+
 ### Reparto manual sin interfaz — F3
 `desbloquearReparto()` y `setAllocation()` existen y estan testeados, pero no
 hay todavia ningun panel donde el jugador mueva sus horas: eso llega con el

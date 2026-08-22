@@ -1,4 +1,6 @@
 import { createClipState } from '../clip.ts'
+import { FORMATO_INICIAL } from '../../content/contentTypes.ts'
+import { crearHistorial } from '../historial.ts'
 import { SCHEMA_VERSION, type GameState } from '../state.ts'
 
 /**
@@ -31,6 +33,27 @@ export const MIGRACIONES: Record<number, Migracion> = {
     chatNextId: 1,
     chatAcc: 0,
     schemaVersion: 2,
+  }),
+
+  /**
+   * v2 -> v3: aparecen los formatos de contenido. Una partida vieja se
+   * reanuda con el formato de arranque, que es el que estaba emitiendo de
+   * hecho aunque el juego no lo nombrase.
+   */
+  2: (s) => ({
+    ...s,
+    formato: FORMATO_INICIAL,
+    schemaVersion: 3,
+  }),
+
+  /**
+   * v3 -> v4: aparecen las curvas de alcance y comunidad. Arrancan vacias; se
+   * llenan solas en los primeros segundos de juego.
+   */
+  3: (s) => ({
+    ...s,
+    historial: crearHistorial(),
+    schemaVersion: 4,
   }),
 }
 
