@@ -26,6 +26,11 @@ export const TUNABLES = {
     halfLifeSeconds: 45,
     /** Cuanta comunidad hace falta para reducir el decaimiento a la mitad. */
     shieldK: 2000,
+    /**
+     * Fraccion del decaimiento base que NUNCA se puede evitar, por mucha
+     * comunidad que tengas. Sin este suelo el crecimiento no tiene techo.
+     */
+    shieldFloor: 0.25,
   },
 
   /** COMUNIDAD — crece lento, protege. */
@@ -36,6 +41,11 @@ export const TUNABLES = {
     conversionBase: 0.0007,
     /** Cuanto pesa la calidad en la conversion. */
     qualityWeight: 0.6,
+    /**
+     * Escala de saturacion: a partir de aqui cuesta el doble sumar a alguien
+     * nuevo. Representa que la gente a la que le puedes gustar es finita.
+     */
+    saturationK: 60_000,
   },
 
   /** CALIDAD — multiplica el rendimiento por hora. */
@@ -84,9 +94,14 @@ export const TUNABLES = {
   /** ECONOMIA. */
   economia: {
     /** Ingresos por unidad de alcance y segundo. */
-    cpmPerAlcance: 0.000018,
+    cpmPerAlcance: 0.000009,
     /** Ingresos por unidad de comunidad y segundo (suscripciones, apoyos). */
-    incomePerComunidad: 0.00004,
+    incomePerComunidad: 0.00002,
+    /**
+     * Techo asintotico de la aportacion de la comunidad. Por mucho que crezca,
+     * los ingresos por comunidad no pasan de incomePerComunidad x este valor.
+     */
+    incomeSaturationK: 60_000,
     /** Ahorros iniciales, en semanas de coste de vida cubiertas. */
     initialSavingsWeeks: 4,
     /** Rendimiento anual de los ahorros, aplicado prorrateado. */
@@ -96,7 +111,7 @@ export const TUNABLES = {
   /** CATALOGO — la cola larga que hace posible el retiro. */
   catalogo: {
     /** Ingreso base por segundo de una publicacion recien salida. */
-    residualPerPublication: 0.00035,
+    residualPerPublication: 0.0000085,
     /** Vida media del decaimiento de una publicacion, en semanas. */
     decayHalfLifeWeeks: 8,
     /**

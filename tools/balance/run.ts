@@ -15,14 +15,14 @@ const num = (n: number, d = 0) => n.toFixed(d).padStart(9)
 
 console.log('\n  BANCO DE BALANCE — minuto de retiro por politica\n')
 console.log(
-  `  ${pad('bot', 14)}${pad('retiro', 10)}${pad('cobertura', 11)}${pad('comunidad', 11)}${pad('calidad', 9)}fatiga max`,
+  `  ${pad('bot', 14)}${pad('retiro', 10)}${pad('cobertura', 11)}${pad('comunidad', 11)}${pad('calidad', 9)}${pad('fatiga', 9)}compras`,
 )
 console.log('  ' + '-'.repeat(70))
 
 for (const r of results) {
   const retiro = r.retiroEnMinuto === null ? '  —' : `${r.retiroEnMinuto.toFixed(0)} min`
   console.log(
-    `  ${pad(r.botId, 14)}${pad(retiro, 10)}${num(r.coberturaFinal, 2)}  ${num(r.comunidadFinal, 0)}  ${num(r.calidadFinal, 2)}  ${num(r.fatigaMaxima, 2)}`,
+    `  ${pad(r.botId, 14)}${pad(retiro, 10)}${num(r.coberturaFinal, 2)}  ${num(r.comunidadFinal, 0)}  ${num(r.calidadFinal, 2)}  ${num(r.fatigaMaxima, 2)}  ${String(r.compras).padStart(5)}`,
   )
 }
 

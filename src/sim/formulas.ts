@@ -47,15 +47,22 @@ export function calcProduccion(
 /**
  * Decaimiento del alcance, amortiguado por la comunidad.
  *
- *   lambda_efectiva = lambda_base / (1 + C / k)
+ *   lambda_efectiva = lambda_base x (suelo + (1 - suelo) / (1 + C / k))
  *
- * Esta es la regla de balance n5 del GDD convertida en ecuacion: parar sale
- * barato solo si has construido comunidad.
+ * Es la regla de balance n5 del GDD convertida en ecuacion: parar sale barato
+ * solo si has construido comunidad.
+ *
+ * El SUELO no es decoracion. Sin el, la formula era lambda/(1 + C/k), que
+ * tiende a cero: con comunidad suficiente el alcance dejaba de caer, y como el
+ * alcance alimenta la comunidad, ambos se disparaban sin techo. El banco de
+ * balance lo detecto con comunidades de nueve cifras. Con suelo, el escudo
+ * tiene un tope: proteger mucho, si; volverse inmune, no.
  */
 export function calcAlcanceDecayRate(comunidad: number, legadoRetencion: number): number {
   const base = decayRateFromHalfLife(TUNABLES.alcance.halfLifeSeconds)
-  const shield = 1 + (comunidad * legadoRetencion) / TUNABLES.alcance.shieldK
-  return base / shield
+  const { shieldK, shieldFloor } = TUNABLES.alcance
+  const proteccion = 1 / (1 + (comunidad * legadoRetencion) / shieldK)
+  return base * (shieldFloor + (1 - shieldFloor) * proteccion)
 }
 
 /**
@@ -70,17 +77,32 @@ export function calcConversion(
   calidad: number,
   afinidadFormato: number,
   tiempoComunidad: number,
+  comunidad = 0,
 ): number {
-  const { conversionBase, qualityWeight } = TUNABLES.comunidad
+  const { conversionBase, qualityWeight, saturationK } = TUNABLES.comunidad
   const qualityFactor = 1 - qualityWeight + qualityWeight * calidad
   const esfuerzo = afinidadFormato + tiempoComunidad
-  return alcance * conversionBase * qualityFactor * esfuerzo
+  // Saturacion: la gente a la que le puedes gustar es finita. Cuanta mas
+  // comunidad tienes, menos queda por convertir. Sin esto, la conversion
+  // realimentaba al escudo y el crecimiento no tenia techo.
+  const margen = 1 / (1 + comunidad / saturationK)
+  return alcance * conversionBase * qualityFactor * esfuerzo * margen
 }
 
-/** Ingresos por segundo: flujo directo mas la cola larga del catalogo. */
+/**
+ * Ingresos por segundo del flujo directo: publicidad y apoyos.
+ *
+ * La aportacion de la comunidad SATURA. Una comunidad diez veces mayor no
+ * paga diez veces mas: cambia la proporcion de gente que apoya, se topan los
+ * patrocinios y el canal deja de escalar linealmente. Sin esta saturacion, el
+ * dinero tardio crecia tanto que el retiro se resolvia solo por acumulacion y
+ * el catalogo —que es el motor economico que quiere el diseno— dejaba de
+ * importar. El banco lo vio: coberturas de 23x cuando 1x ya es retirarse.
+ */
 export function calcIngresosDirectos(alcance: number, comunidad: number): number {
-  const { cpmPerAlcance, incomePerComunidad } = TUNABLES.economia
-  return alcance * cpmPerAlcance + comunidad * incomePerComunidad
+  const { cpmPerAlcance, incomePerComunidad, incomeSaturationK } = TUNABLES.economia
+  const comunidadEfectiva = comunidad / (1 + comunidad / incomeSaturationK)
+  return alcance * cpmPerAlcance + comunidadEfectiva * incomePerComunidad
 }
 
 /**
@@ -109,6 +131,23 @@ export function calcResidualTotal(state: Pick<GameState, 'catalogo' | 'week'>): 
 export function calcRecuperacionFatiga(vida: number, tiempoDescanso: number): number {
   const { recoveryPerSecondBase, recoveryLifeBonus } = TUNABLES.fatiga
   return (recoveryPerSecondBase + recoveryLifeBonus * clamp01(vida)) * tiempoDescanso
+}
+
+export type NivelFatiga = 'ok' | 'aviso' | 'saturado' | 'critico'
+
+/**
+ * Traduce la fatiga a los cuatro estados del GDD (6.5).
+ *
+ * Existe para que la interfaz, el chat y la logica no discrepen nunca sobre
+ * si el creador esta cansado. El aviso llega ANTES de la penalizacion: el
+ * jugador debe poder reaccionar, no descubrirlo cuando ya es tarde.
+ */
+export function nivelFatiga(fatiga: number): NivelFatiga {
+  const { saturationThreshold, burnoutThreshold, warningThreshold } = TUNABLES.fatiga
+  if (fatiga >= burnoutThreshold) return 'critico'
+  if (fatiga >= warningThreshold) return 'saturado'
+  if (fatiga >= saturationThreshold) return 'aviso'
+  return 'ok'
 }
 
 export function clamp01(v: number): number {

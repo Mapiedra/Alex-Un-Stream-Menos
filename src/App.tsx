@@ -4,10 +4,12 @@ import { PlayerHeader } from './ui/player/PlayerHeader.tsx'
 import { Stage } from './ui/player/Stage.tsx'
 import { ControlBar } from './ui/player/ControlBar.tsx'
 import { ChatPanel } from './ui/player/ChatPanel.tsx'
+import { Tienda } from './ui/panels/Tienda.tsx'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
 import { houseLivingCost } from './sim/state.ts'
 import { TUNABLES } from './sim/tunables.ts'
+import { nivelFatiga } from './sim/formulas.ts'
 import type { TokenKey } from './ui/theme/palette.ts'
 
 /**
@@ -25,6 +27,7 @@ export function App() {
   const setPaused = useGame((s) => s.setPaused)
   const publish = useGame((s) => s.publish)
   const catchClip = useGame((s) => s.catchClip)
+  const avisoCarga = useGame((s) => s.avisoCarga)
 
   const costeVidaSemanal = houseLivingCost(g.houseStage)
   const ingresosSemanales = g.ingresosPorSegundo * TUNABLES.secondsPerWeek
@@ -34,6 +37,7 @@ export function App() {
   // La intensidad de los neones sigue al alcance: la calle se enciende cuando
   // hay gente mirando y se apaga cuando no.
   const intensidad = Math.min(1, g.alcance / 8000)
+  const fatiga = nivelFatiga(g.fatiga)
 
   return (
     <div className="app">
@@ -59,6 +63,9 @@ export function App() {
         onPublicar={publish}
       />
 
+      {avisoCarga && <p className="aviso aviso--error">{avisoCarga}</p>}
+      {fatiga !== 'ok' && <p className="aviso" data-nivel={fatiga}>{AVISO_FATIGA[fatiga]}</p>}
+
       <div className="stats">
         <Stat label="Alcance" valor={fmt(g.alcance)} token="alcance" hint="Gente que te descubre ahora. Sube rapido y cae con facilidad; la comunidad frena esa caida." />
         <Stat label="Comunidad" valor={fmt(g.comunidad)} token="comunidad" hint="Gente que sigue por ti. Crece lento y protege cuando paras." />
@@ -74,11 +81,24 @@ export function App() {
         <Stat label="Clips" valor={`${g.clip.acertados}`} token="alcance" hint="Momentos capturados. Fallarlos no cuesta progreso: la partida es ganable sin acertar ninguno." />
       </div>
 
+      <Tienda />
+
       <DevPanel />
 
       <ChatPanel mensajes={g.chat} suscriptores={g.comunidad} />
     </div>
   )
+}
+
+/**
+ * El aviso llega ANTES de la penalizacion. El GDD (6.5) pide que forzar tenga
+ * consecuencias, no que te pillen por sorpresa: el jugador debe poder decidir
+ * parar, no enterarse de que era tarde.
+ */
+const AVISO_FATIGA: Record<'aviso' | 'saturado' | 'critico', string> = {
+  aviso: 'Llevas demasiadas horas seguidas. La calidad empieza a resentirse.',
+  saturado: 'Estas al limite. Si sigues asi, vas a tener que parar en seco.',
+  critico: 'No puedes seguir. Necesitas descansar de verdad.',
 }
 
 interface StatProps {

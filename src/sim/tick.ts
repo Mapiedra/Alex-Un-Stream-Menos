@@ -48,7 +48,13 @@ export function step(state: GameState, dtMs: number): GameState {
   // --- Comunidad ----------------------------------------------------------
   // Afinidad base baja: producir por producir apenas fideliza. Lo que fideliza
   // es el tiempo dedicado explicitamente a la comunidad.
-  const conversion = calcConversion(state.alcance, calidad, AFINIDAD_BASE, alloc.comunidad)
+  const conversion = calcConversion(
+    state.alcance,
+    calidad,
+    AFINIDAD_BASE,
+    alloc.comunidad,
+    state.comunidad,
+  )
   const comunidadDecay = decayRateFromHalfLife(TUNABLES.comunidad.halfLifeSeconds) / state.legadoRetencion
   const comunidad = Math.max(0, state.comunidad + (conversion - state.comunidad * comunidadDecay) * dt)
 

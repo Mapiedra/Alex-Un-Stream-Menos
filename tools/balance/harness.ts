@@ -2,7 +2,8 @@ import { createInitialState, houseLivingCost, type GameState } from '../../src/s
 import { publicar, step } from '../../src/sim/tick.ts'
 import { TUNABLES } from '../../src/sim/tunables.ts'
 import { calcResidualTotal } from '../../src/sim/formulas.ts'
-import type { Bot } from './bots.ts'
+import { siguienteCompra, type Bot } from './bots.ts'
+import { comprar } from '../../src/sim/shop.ts'
 
 export interface RunResult {
   botId: string
@@ -14,6 +15,7 @@ export interface RunResult {
   calidadFinal: number
   fatigaMaxima: number
   ahorrosFinal: number
+  compras: number
   /** Coste de vida cubierto por rentas, al final. 1 = justo cubierto. */
   coberturaFinal: number
   /** Serie temporal para comparar bots minuto a minuto. */
@@ -46,8 +48,22 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
   const muestras: RunResult['muestras'] = []
   let proximaMuestra = 0
 
+  let compras = 0
+
   for (let i = 0; i < maxTicks; i++) {
-    s = { ...s, allocation: bot.allocation(s) }
+    // Comprar primero: en los ciclos 1-2 la compra es lo que mueve el reparto.
+    if (!bot.compra || bot.compra(s)) {
+      const id = siguienteCompra(s, bot.prioridad)
+      if (id) {
+        const antes = s
+        s = comprar(s, id)
+        if (s !== antes) compras += 1
+      }
+    }
+
+    // Un reparto manual pisa al derivado; sin el, mandan las compras.
+    if (bot.allocation) s = { ...s, allocation: bot.allocation(s) }
+
     if (bot.publish(s)) s = publicar(s)
     s = step(s, dt)
 
@@ -80,6 +96,7 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
     calidadFinal: s.calidad,
     fatigaMaxima,
     ahorrosFinal: s.ahorros,
+    compras,
     coberturaFinal: calcCobertura(s),
     muestras,
   }

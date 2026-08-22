@@ -3,7 +3,11 @@ import type { ChatMessage } from './chat.ts'
 import { createClipState, type ClipState } from './clip.ts'
 import { TUNABLES } from './tunables.ts'
 
-export const SCHEMA_VERSION = 1
+/**
+ * Version del formato de guardado. Se sube cada vez que GameState cambia de
+ * forma, y se anade la migracion correspondiente en save/migrate.ts.
+ */
+export const SCHEMA_VERSION = 2
 
 /**
  * Reparto del tiempo del creador. Siempre suma 1.
@@ -75,7 +79,10 @@ export interface GameState {
   /** Se abre al llegar al ciclo 3: sistematizar el flujo propio. */
   allocationUnlocked: boolean
 
-  // Multiplicadores de mejoras compradas
+  /** Mejoras compradas: id -> niveles. La fuente de casi todo lo demas. */
+  owned: Record<string, number>
+
+  // Derivados de `owned`, recalculados en cada compra.
   multEficiencia: number
   multCalidad: number
   multAlcance: number
@@ -124,6 +131,8 @@ export function createInitialState(seed = 1): GameState {
     // Ciclo 1: casi todo produccion. Lo fija el juego, no el jugador.
     allocation: { produccion: 0.7, comunidad: 0.05, vida: 0.15, descanso: 0.1 },
     allocationUnlocked: false,
+
+    owned: {},
 
     multEficiencia: 1,
     multCalidad: 1,

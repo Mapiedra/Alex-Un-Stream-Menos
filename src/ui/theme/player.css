@@ -423,3 +423,121 @@
     max-height: 40vh;
   }
 }
+
+/* ---------- Avisos ---------- */
+.aviso {
+  grid-column: 1;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  font-size: 13px;
+  background: var(--c-bgRaised);
+  border-left: 3px solid var(--c-warning);
+  color: var(--c-text);
+}
+
+.aviso[data-nivel="saturado"] {
+  border-left-color: var(--c-fatiga);
+}
+
+.aviso[data-nivel="critico"],
+.aviso--error {
+  border-left-color: var(--c-fatiga);
+  color: var(--c-fatiga);
+}
+
+/* ---------- Tienda ---------- */
+.tienda {
+  grid-column: 1;
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+  min-height: 0;
+}
+
+.tienda__tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.tienda__tab {
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: none;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--c-textMuted);
+  padding: var(--space-1) var(--space-3);
+}
+
+.tienda__tab[data-activa="true"] {
+  color: var(--c-textBright);
+  border-color: var(--c-accent);
+  background: var(--c-bgRaised);
+}
+
+.tienda__saldo {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--c-ingresos);
+}
+
+.tienda__lista {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  max-height: 34vh;
+  overflow-y: auto;
+}
+
+.mejora {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+}
+
+.mejora[data-agotada="true"] {
+  opacity: 0.45;
+}
+
+.mejora__texto {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mejora__nombre {
+  color: var(--c-textBright);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mejora__nivel {
+  color: var(--c-accent);
+  font-style: normal;
+}
+
+.mejora__desc {
+  color: var(--c-textMuted);
+  font-size: 12px;
+}
+
+.mejora__efecto {
+  color: var(--c-alcance);
+  font-size: 11px;
+}
+
+.mejora__boton {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: none;
+  white-space: nowrap;
+}
