@@ -81,6 +81,14 @@ export const MIGRACIONES: Record<number, Migracion> = {
     repartoAntesDeParar: null,
     schemaVersion: 6,
   }),
+
+  /** v6 -> v7: aparece el final. Una partida vieja sigue abierta. */
+  6: (s) => ({
+    ...s,
+    final: null,
+    semanasEnUmbral: 0,
+    schemaVersion: 7,
+  }),
 }
 
 export class SaveIncompatible extends Error {}

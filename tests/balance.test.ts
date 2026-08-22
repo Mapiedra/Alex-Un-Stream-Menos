@@ -33,6 +33,7 @@ const avaro = correr('avaro')
 const sinDescanso = correr('sin-descanso')
 const vacacionero = correr('vacacionero')
 const derivadoRun = correr('derivado')
+const aprovechado = correr('aprovechado')
 
 describe('ninguna estrategia domina la partida', () => {
   it('el equilibrado se retira antes que cualquier estrategia de un solo eje', () => {
@@ -58,10 +59,12 @@ describe('forzar horas no funciona a medio plazo', () => {
 
 describe('descansar es rentable, no un capricho', () => {
   it('el que descansa se retira; su clon identico que no descansa, no', () => {
-    // Mismo perfil de compras, misma cadencia de publicacion. La unica
-    // diferencia entre ambos es cuanto tiempo dedican a parar.
+    // Desde F5 esto es en parte tautologico: la seccion 11 exige haber parado
+    // al menos una vez. Se conserva porque tambien mide lo otro, que no lo es:
+    // el que no descansa se quema y ni siquiera se acerca a las condiciones.
     expect(equilibrado.retiroEnMinuto).not.toBeNull()
     expect(sinDescanso.retiroEnMinuto).toBeNull()
+    expect(sinDescanso.condicionesFinales).toBe(false)
   })
 
   it('el que no descansa acaba con una calidad hundida', () => {
@@ -93,20 +96,39 @@ describe('las vacaciones compensan', () => {
     )
   })
 
-  it('el que descansa acumula Legado y el que no, ninguno', () => {
-    expect(vacacionero.vacaciones).toBeGreaterThan(0)
-    expect(equilibrado.vacaciones).toBe(0)
+  it('descansar mas de lo minimo compensa', () => {
+    // Todos los bots serios paran al menos una vez, porque el retiro lo exige.
+    // Lo que se mide aqui es si parar MAS sigue mereciendo la pena, y si.
+    expect(vacacionero.vacaciones).toBeGreaterThan(equilibrado.vacaciones)
+    expect(equilibrado.vacaciones).toBeGreaterThan(0)
   })
 })
 
 describe('los eventos extraordinarios no son requisito', () => {
   /**
-   * Regla 3 del GDD: potentes pero escasos, y NUNCA necesarios para ganar.
+   * Aqui hay una tension real entre dos secciones del GDD, y conviene dejar
+   * escrito como se ha resuelto.
+   *
+   * La seccion 11 lista "al menos un evento extraordinario aprovechado o
+   * VIVIDO" entre las condiciones de victoria. La seccion 12 dice que los
+   * eventos "nunca deben ser requisito para ganar".
+   *
+   * Lectura adoptada: los eventos ocurren solos, sin que el jugador haga
+   * nada, asi que haber vivido uno no es un requisito que se pueda fallar.
+   * Lo que es opcional —y lo que la seccion 12 protege— es EXPLOTARLOS:
+   * prepararlos, exprimirlos, organizar la partida alrededor de ellos.
    */
-  it('ningun bot prepara la conferencia y aun asi varios se retiran', () => {
-    // Ni equilibrado ni calidad ni derivado invierten jamas en prepararse.
+  it('nadie necesita preparar la conferencia para retirarse', () => {
+    // Ni equilibrado ni derivado invierten jamas en prepararse.
     expect(equilibrado.retiroEnMinuto).not.toBeNull()
-    expect(calidad.retiroEnMinuto).not.toBeNull()
+    expect(derivadoRun.retiroEnMinuto).not.toBeNull()
+  })
+
+  it('prepararlos no cambia el desenlace, solo lo hace mas comodo', () => {
+    // Si preparar adelantase el retiro de forma clara, los eventos habrian
+    // pasado de ayudar a ser obligatorios.
+    const dif = Math.abs((aprovechado.retiroEnMinuto ?? 0) - (equilibrado.retiroEnMinuto ?? 0))
+    expect(dif).toBeLessThan(15)
   })
 
   it('son escasos: unos pocos por partida, no uno cada dos semanas', () => {
@@ -156,6 +178,23 @@ describe('duracion de la partida', () => {
       const min = r.retiroEnMinuto ?? Infinity
       expect(min, `${r.botId} se retira demasiado pronto`).toBeGreaterThan(20)
     }
+  })
+})
+
+describe('la condicion del retiro es la del GDD, no un proxy economico', () => {
+  it('facturar mucho no basta si se trabaja mucho', () => {
+    /**
+     * Hasta F4 el banco media solo la cobertura economica, y con eso los bots
+     * "se retiraban" trabajando doce horas al dia — que es exactamente lo que
+     * el juego dice que NO es retirarse. El bot sin-descanso lo demuestra:
+     * llega a tener comunidad y compras de sobra, y aun asi no cumple.
+     */
+    expect(sinDescanso.comunidadFinal).toBeGreaterThan(50_000)
+    expect(sinDescanso.condicionesFinales).toBe(false)
+  })
+
+  it('quien se retira cumple de verdad las ocho condiciones', () => {
+    expect(equilibrado.condicionesFinales).toBe(true)
   })
 })
 

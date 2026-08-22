@@ -6,6 +6,7 @@ import { comprar, desbloquearReparto } from './sim/shop.ts'
 import { resolver } from './sim/lifeEvents.ts'
 import { irseDeVacaciones, puedeIrseDeVacaciones } from './sim/descanso.ts'
 import { prepararEvento } from './sim/bigEvents.ts'
+import { retirarse } from './sim/final.ts'
 import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
 
 /** Cada cuantos ms de tiempo real se autoguarda. */
@@ -30,6 +31,8 @@ interface GameStore {
   setFormato: (id: string) => void
   resolverEvento: (opcion: number) => void
   irDeVacaciones: () => void
+  retirarse: () => void
+  elegirFinal: (id: string) => void
   prepararEvento: () => void
   unlockAllocation: () => void
   setAllocation: (a: Allocation) => void
@@ -120,6 +123,23 @@ export const useGame = create<GameStore>((set, get) => ({
     set((s) => {
       if (!puedeIrseDeVacaciones(s.game)) return s
       const game = irseDeVacaciones({ ...s.game, repartoAntesDeParar: s.game.allocation })
+      guardar(game)
+      return { game }
+    }),
+
+  // Cerrar la partida. Se puede hacer con las condiciones cumplidas o sin
+  // ellas: dejarlo sin haber llegado no es perder, es el final por defecto.
+  retirarse: () =>
+    set((s) => {
+      const game = retirarse(s.game, null)
+      if (game !== s.game) guardar(game)
+      return { game }
+    }),
+
+  elegirFinal: (id) =>
+    set((s) => {
+      if (!s.game.final) return s
+      const game = { ...s.game, final: { ...s.game.final, eleccion: id } }
       guardar(game)
       return { game }
     }),

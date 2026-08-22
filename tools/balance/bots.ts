@@ -1,6 +1,19 @@
 import { UPGRADES, type Categoria } from '../../src/content/upgrades.ts'
 import { disponibilidad } from '../../src/sim/allocation.ts'
+import { cobertura } from '../../src/sim/final.ts'
 import type { Allocation, GameState } from '../../src/sim/state.ts'
+
+/**
+ * Fase de libertad: el momento en que las cuentas ya salen.
+ *
+ * Un jugador que llega aqui y sigue currando doce horas no se esta retirando
+ * de nada, y el juego se lo dice: la ultima condicion de la seccion 11 es
+ * sostenerlo TRABAJANDO POCO. Los bots serios bajan las horas cuando pueden,
+ * que es justo lo que el GDD quiere que el jugador aprenda.
+ */
+const enLibertad = (s: GameState): boolean => cobertura(s) >= 1.1
+
+const LIBRE: Allocation = { produccion: 0.15, comunidad: 0.35, vida: 0.25, descanso: 0.25 }
 
 /**
  * Un bot es una politica de juego: decide como reparte el tiempo, que compra y
@@ -60,25 +73,31 @@ export const BOTS: Bot[] = [
   {
     id: 'calidad',
     descripcion: 'Prioriza descanso y vida para maximizar calidad.',
-    allocation: () => ({ produccion: 0.4, comunidad: 0.1, vida: 0.3, descanso: 0.2 }),
+    allocation: (s) => (enLibertad(s) ? LIBRE : { produccion: 0.4, comunidad: 0.1, vida: 0.3, descanso: 0.2 }),
     prioridad: ['rutina', 'setup', 'flujo'],
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
     publish: (s) => cada(s, 12),
   },
   {
     id: 'comunidad',
     descripcion: 'Vuelca el tiempo en fidelizar.',
-    allocation: () => ({ produccion: 0.35, comunidad: 0.5, vida: 0.1, descanso: 0.05 }),
+    allocation: (s) => (enLibertad(s) ? LIBRE : { produccion: 0.35, comunidad: 0.5, vida: 0.1, descanso: 0.05 }),
     prioridad: ['formato', 'rutina', 'setup'],
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
     publish: (s) => cada(s, 12),
   },
   {
     id: 'equilibrado',
-    descripcion: 'Reparte, ajusta segun la fatiga y compra de todo. Deberia ganar.',
+    descripcion: 'Reparte, compra de todo, descansa una vez y baja horas al llegar.',
     allocation: (s) =>
-      s.fatiga > 0.55
-        ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
-        : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
+      enLibertad(s)
+        ? LIBRE
+        : s.fatiga > 0.55
+          ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
+          : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
     prioridad: TODO,
+    // Una sola vez: lo minimo que pide la condicion del GDD.
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
     publish: (s) => cada(s, 10),
   },
   {
@@ -101,9 +120,11 @@ export const BOTS: Bot[] = [
     id: 'vacacionero',
     descripcion: 'Como el equilibrado, pero para cada cierto tiempo por el Legado.',
     allocation: (s) =>
-      s.fatiga > 0.55
-        ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
-        : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
+      enLibertad(s)
+        ? LIBRE
+        : s.fatiga > 0.55
+          ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
+          : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
     prioridad: TODO,
     /**
      * Para cada 25 semanas, no cuando se cansa.
@@ -120,17 +141,24 @@ export const BOTS: Bot[] = [
     id: 'aprovechado',
     descripcion: 'Como el equilibrado, pero prepara siempre la conferencia.',
     allocation: (s) =>
-      s.fatiga > 0.55
-        ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
-        : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
+      enLibertad(s)
+        ? LIBRE
+        : s.fatiga > 0.55
+          ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
+          : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
     prioridad: TODO,
     prepara: true,
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
     publish: (s) => cada(s, 10),
   },
   {
     id: 'derivado',
-    descripcion: 'No toca el reparto: lo deja en manos de lo que compra. El jugador del ciclo 1.',
+    descripcion: 'No toca el reparto salvo al final. El jugador que solo compra.',
+    // Sin reparto propio hasta que llega la libertad: hasta ahi manda lo que
+    // ha comprado, como en los ciclos 1-2.
+    allocation: (s) => (enLibertad(s) ? LIBRE : s.allocation),
     prioridad: TODO,
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
     publish: (s) => cada(s, 10),
   },
 ]

@@ -96,3 +96,47 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Preferencias de accesibilidad ----------
+   Se aplican como atributos en <html> desde el panel de opciones. */
+
+/* Texto mas grande: solo la capa de datos. La de pixeles no escala en
+   fracciones, asi que se queda como esta. */
+:root[data-texto-grande='true'] body {
+  font-size: 16px;
+}
+
+:root[data-texto-grande='true'] .stat__valor,
+:root[data-texto-grande='true'] .chat__linea,
+:root[data-texto-grande='true'] .tarjeta__texto {
+  font-size: 15px;
+}
+
+/* Mas contraste: los textos secundarios sobre fondo oscuro se quedan cortos. */
+:root[data-alto-contraste='true'] {
+  --c-textDim: var(--c-textMuted);
+  --c-textMuted: var(--c-text);
+  --c-text: var(--c-textBright);
+}
+
+/* Sin animaciones, pedido a mano. El equivalente automatico esta abajo. */
+:root[data-sin-animaciones='true'] *,
+:root[data-sin-animaciones='true'] *::before,
+:root[data-sin-animaciones='true'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Filtro CRT: capricho, apagado por defecto. */
+:root[data-crt='true'] .stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0 2px,
+    var(--c-bg) 2px 3px
+  );
+  opacity: 0.35;
+}

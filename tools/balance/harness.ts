@@ -1,7 +1,8 @@
-import { createInitialState, houseLivingCost, type GameState } from '../../src/sim/state.ts'
+import { createInitialState } from '../../src/sim/state.ts'
+import { cobertura, cumpleRetiro, puedeRetirarse } from '../../src/sim/final.ts'
 import { publicar, step } from '../../src/sim/tick.ts'
 import { TUNABLES } from '../../src/sim/tunables.ts'
-import { calcResidualTotal } from '../../src/sim/formulas.ts'
+
 import { siguienteCompra, type Bot } from './bots.ts'
 import { comprar } from '../../src/sim/shop.ts'
 import { resolver } from '../../src/sim/lifeEvents.ts'
@@ -22,6 +23,8 @@ export interface RunResult {
   eventos: number
   ahorrosFinal: number
   compras: number
+  /** Cumple las ocho condiciones del retiro al terminar? */
+  condicionesFinales: boolean
   /** Coste de vida cubierto por rentas, al final. 1 = justo cubierto. */
   coberturaFinal: number
   /** Serie temporal para comparar bots minuto a minuto. */
@@ -29,18 +32,14 @@ export interface RunResult {
 }
 
 /**
- * Cobertura del retiro: cuanto del coste de vida cubren las rentas pasivas.
+ * El banco mide el retiro REAL, no un proxy economico.
  *
- *   (residuales del catalogo + rendimiento de los ahorros) / coste de vida
- *
- * Llegar a 1 es poder dejar de producir sin que las cuentas se hundan.
+ * Durante F0-F4 media solo la cobertura, que es una de las ocho condiciones de
+ * la seccion 11. Con las otras siete implementadas eso ya no vale: un bot
+ * podia "retirarse" facturando mucho y trabajando doce horas al dia, que es
+ * exactamente lo que el juego dice que NO es retirarse.
  */
-export function calcCobertura(s: GameState): number {
-  const residual = calcResidualTotal(s)
-  const rendimiento = (s.ahorros * TUNABLES.economia.savingsYield) / (52 * TUNABLES.secondsPerWeek)
-  const costeVida = houseLivingCost(s.houseStage) / TUNABLES.secondsPerWeek
-  return costeVida > 0 ? (residual + rendimiento) / costeVida : 0
-}
+export const calcCobertura = cobertura
 
 export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = {}): RunResult {
   const maxMinutes = opts.maxMinutes ?? 240
@@ -101,7 +100,7 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
 
     // No se corta al retirarse: se sigue simulando para que las curvas de
     // todos los bots sean comparables minuto a minuto.
-    if (retiroEnMinuto === null && calcCobertura(s) >= 1) {
+    if (retiroEnMinuto === null && puedeRetirarse(s)) {
       retiroEnMinuto = minuto
     }
   }
@@ -120,6 +119,7 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
     ahorrosFinal: s.ahorros,
     compras,
     coberturaFinal: calcCobertura(s),
+    condicionesFinales: cumpleRetiro(s),
     muestras,
   }
 }

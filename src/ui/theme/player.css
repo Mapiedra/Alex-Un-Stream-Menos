@@ -1107,3 +1107,123 @@
   border-top: 1px solid var(--c-border);
   padding-top: var(--space-2);
 }
+
+/* ---------- Retiro y final ---------- */
+.retiro {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--c-bgPanel);
+  border-top: 2px solid var(--c-accent);
+}
+
+.retiro__cobertura {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-ingresos);
+}
+
+.retiro__boton {
+  justify-self: start;
+}
+
+/* Solo se pinta como logro cuando de verdad lo es. */
+.retiro__boton[data-listo="true"] {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-textBright);
+}
+
+.modal--final {
+  background: var(--c-bg);
+  overflow-y: auto;
+  align-items: start;
+  padding: var(--space-6) var(--space-4);
+}
+
+.tarjeta--final {
+  max-width: 540px;
+  border-color: var(--c-accent);
+}
+
+.tarjeta__cierre {
+  color: var(--c-textBright);
+  border-left: 2px solid var(--c-accent);
+  padding-left: var(--space-3);
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--c-border);
+}
+
+.resumen__dato dt {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-textDim);
+}
+
+.resumen__dato dd {
+  margin: 0;
+  font-size: 15px;
+  color: var(--c-textBright);
+}
+
+/* ---------- Opciones ---------- */
+.opciones {
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-bg);
+  border-top: 1px solid var(--c-border);
+}
+
+.opciones__toggle {
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: none;
+}
+
+.opciones__lista {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  max-width: 620px;
+}
+
+.casilla {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  align-items: start;
+  cursor: pointer;
+}
+
+.casilla input {
+  margin-top: 3px;
+  accent-color: var(--c-accent);
+}
+
+.casilla__etiqueta {
+  display: block;
+  color: var(--c-textBright);
+  font-size: 13px;
+}
+
+.casilla__ayuda {
+  display: block;
+  color: var(--c-textMuted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.opciones__nota {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-textDim);
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--space-3);
+}

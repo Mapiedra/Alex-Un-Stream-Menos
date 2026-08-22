@@ -14,6 +14,7 @@ import { CHAT_BUFFER, chatStep } from './chat.ts'
 import { CONTENT_POR_ID, FORMATO_INICIAL } from '../content/contentTypes.ts'
 import { muestrear } from './historial.ts'
 import { avanzarCiclo, puedeAvanzar } from './cycles.ts'
+import { actualizarUmbral } from './final.ts'
 import { avanzarSemana, multEvento, sortearEvento } from './bigEvents.ts'
 import { aplicarRecuperacion, avanzarDescanso, entrarEnBurnout } from './descanso.ts'
 import {
@@ -39,6 +40,9 @@ export function step(state: GameState, dtMs: number): GameState {
   // Con una tarjeta de vida en pantalla la partida se detiene: el tiempo que
   // el jugador dedica a leer no debe consumir su partida.
   if (state.eventoPendiente) return state
+
+  // La partida terminada no sigue simulando por detras.
+  if (state.final) return state
 
   const alloc = state.allocation
   // El formato decide en que se convierte el trabajo. Si el guardado trae uno
@@ -266,6 +270,15 @@ export function step(state: GameState, dtMs: number): GameState {
   // --- Historial ----------------------------------------------------------
   const historial = muestrear(state.historial, alcance, comunidad, dt)
 
+  // --- Umbral de retiro ---------------------------------------------------
+  // Se cuenta por semanas para que rozar las condiciones un instante no valga.
+  const semanasEnUmbral = cambiaSemana
+    ? actualizarUmbral(
+        { ...state, comunidad: comunidadFinal, calidad, fatiga, allocation: allocFinal },
+        semanaNueva,
+      )
+    : state.semanasEnUmbral
+
   // --- Reloj --------------------------------------------------------------
   const elapsedMs = state.elapsedMs + dtMs * TUNABLES.gameSpeed
   const week = Math.floor(elapsedMs / 1000 / TUNABLES.secondsPerWeek)
@@ -287,6 +300,7 @@ export function step(state: GameState, dtMs: number): GameState {
     modificadores: modsFinal,
     eventoPendiente,
     ultimoEventoSemana,
+    semanasEnUmbral,
     historial,
     chat: mensajes,
     chatNextId: chat.nextId,

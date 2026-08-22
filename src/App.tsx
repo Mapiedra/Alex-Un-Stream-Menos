@@ -10,6 +10,9 @@ import { Carrera } from './ui/panels/Carrera.tsx'
 import { Momentos } from './ui/panels/Momentos.tsx'
 import { Reparto } from './ui/panels/Reparto.tsx'
 import { TarjetaVida } from './ui/panels/TarjetaVida.tsx'
+import { Retiro } from './ui/panels/Retiro.tsx'
+import { Final } from './ui/panels/Final.tsx'
+import { Opciones } from './ui/panels/Opciones.tsx'
 import { Sparkline } from './ui/components/Sparkline.tsx'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
@@ -126,6 +129,8 @@ export function App() {
 
       <Carrera />
 
+      <Retiro />
+
       <Momentos />
 
       <Reparto />
@@ -134,9 +139,13 @@ export function App() {
 
       <Tienda />
 
+      <Opciones />
+
       <DevPanel />
 
       <TarjetaVida />
+
+      <Final />
     </div>
   )
 }

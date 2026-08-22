@@ -164,6 +164,26 @@ export const TUNABLES = {
     maxRetencion: 2.5,
   },
 
+  /**
+   * FINAL — la condicion de retiro de la seccion 11 del GDD.
+   *
+   * El dinero solo no basta: hay que haber construido algo y, sobre todo, hay
+   * que poder sostenerlo TRABAJANDO POCO. De nada sirve llegar al numero a
+   * base de horas, porque entonces no te has retirado de nada.
+   */
+  final: {
+    comunidadMinima: 60_000,
+    calidadMinima: 2.5,
+    fatigaMaxima: 0.35,
+    casaMinima: 3,
+    /** Fraccion maxima del tiempo dedicada a producir. */
+    horasMaximas: 0.3,
+    /** Semanas seguidas cumpliendo todo. Rozarlo un instante no vale. */
+    semanasSostenidas: 4,
+    /** A partir de aqui el retiro es holgado y no ajustado. */
+    coberturaComoda: 1.8,
+  },
+
   /** MOMENTO CLIPPEABLE — contrato de accesibilidad. */
   clip: {
     /** Segundos de ventana para reaccionar. Nunca por debajo de 3. */

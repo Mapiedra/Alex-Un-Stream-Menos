@@ -7,13 +7,14 @@ import { houseStage } from '../content/houseStages.ts'
 import type { ModificadorActivo } from './lifeEvents.ts'
 import type { EventoActivo } from './bigEvents.ts'
 import type { Descanso } from './descanso.ts'
+import type { FinalPartida } from './final.ts'
 import { TUNABLES } from './tunables.ts'
 
 /**
  * Version del formato de guardado. Se sube cada vez que GameState cambia de
  * forma, y se anade la migracion correspondiente en save/migrate.ts.
  */
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 7
 
 /**
  * Reparto del tiempo del creador. Siempre suma 1.
@@ -73,6 +74,11 @@ export interface GameState {
 
   /** El unico clicker del juego. Nunca obligatorio. */
   clip: ClipState
+
+  /** Partida cerrada, con su epilogo. Mientras sea null, se sigue jugando. */
+  final: FinalPartida | null
+  /** Semanas seguidas cumpliendo las condiciones de retiro. */
+  semanasEnUmbral: number
 
   /** Evento extraordinario en curso, con su fase. */
   evento: EventoActivo | null
@@ -156,6 +162,9 @@ export function createInitialState(seed = 1): GameState {
 
     formato: FORMATO_INICIAL,
     clip: createClipState(),
+
+    final: null,
+    semanasEnUmbral: 0,
 
     evento: null,
     ultimoBigEvent: {},

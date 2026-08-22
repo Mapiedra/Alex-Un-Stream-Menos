@@ -32,10 +32,16 @@ Con F4 el equilibrado se retira sobre el minuto 100. La banda del test sigue
 siendo 80-180, mas ancha que el objetivo de 90-160, porque el contenido de F5
 (mas tarjetas, escena final) volvera a moverla.
 
-### Presupuesto de tarjetas de vida — F5
-Hay 10 tarjetas y salen cada 3 semanas, o sea unas 30 veces en una partida
-completa. La baraja se reabre al agotarse, asi que se repiten. El plan
-presupuesta 60-80 tarjetas para F5; hasta entonces la repeticion es visible.
+### Audio — pendiente
+F5 contemplaba audio y no se ha hecho: no hay assets ni fuente para ellos, y
+generar sonido de relleno habria sido peor que no tener ninguno. Queda como
+encargo aparte, junto con los lotes de arte.
+
+### Sin captura de pantalla en todo el desarrollo
+El panel del navegador no se ha mostrado en ninguna sesion, asi que el aspecto
+REAL del juego —colores en pantalla, escena, chat en movimiento, escalado del
+pixel art— sigue sin verse. Todo se ha verificado por DOM y por tests. Es lo
+primero que habria que mirar con ojos humanos.
 
 ## Decisiones que conviene revisar antes de publicar — F7
 
