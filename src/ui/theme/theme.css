@@ -1,0 +1,90 @@
+/* Tokens de color: inyectados en tiempo de ejecucion desde palette.ts.
+   Aqui NO se escribe ningun valor hexadecimal (ver regla de paleta). */
+
+:root {
+  --font-pixel: 'Silkscreen', 'Courier New', monospace;
+  --font-data: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* La fuente de pixeles solo se usa en multiplos exactos de su base. */
+  --px-8: 8px;
+  --px-16: 16px;
+  --px-24: 24px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-data);
+  font-size: 14px;
+  line-height: 1.5;
+  /* El pixel art nunca se interpola. */
+  image-rendering: pixelated;
+}
+
+/* Capa diegetica: titulos y etiquetas cortas en fuente de pixeles. */
+.pixel {
+  font-family: var(--font-pixel);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Capa de datos: cifras largas y tooltips, siempre legibles.
+   Tabular para que los numeros no bailen al cambiar cada tick. */
+.data {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chrome con estetica pixel: bordes duros, cero radios, cero sombras suaves. */
+.panel {
+  background: var(--c-bgPanel);
+  border: 2px solid var(--c-border);
+  padding: var(--space-4);
+}
+
+button {
+  font-family: var(--font-pixel);
+  font-size: var(--px-8);
+  text-transform: uppercase;
+  background: var(--c-bgRaised);
+  color: var(--c-textBright);
+  border: 2px solid var(--c-borderStrong);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--c-borderStrong);
+}
+
+button:disabled {
+  color: var(--c-textDim);
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

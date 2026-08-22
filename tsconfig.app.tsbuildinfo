@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/format.ts","./src/main.tsx","./src/store.ts","./src/vite-env.d.ts","./src/sim/formulas.ts","./src/sim/rng.ts","./src/sim/state.ts","./src/sim/tick.ts","./src/sim/tunables.ts","./src/ui/gameloop.tsx","./src/ui/components/resourcerow.tsx","./src/ui/debug/devpanel.tsx","./src/ui/theme/palette.ts","./src/ui/theme/scale.ts"],"version":"5.9.3"}
