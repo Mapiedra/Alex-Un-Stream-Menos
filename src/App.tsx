@@ -7,6 +7,7 @@ import { ChatPanel } from './ui/player/ChatPanel.tsx'
 import { Tienda } from './ui/panels/Tienda.tsx'
 import { Formatos } from './ui/panels/Formatos.tsx'
 import { Carrera } from './ui/panels/Carrera.tsx'
+import { Momentos } from './ui/panels/Momentos.tsx'
 import { Reparto } from './ui/panels/Reparto.tsx'
 import { TarjetaVida } from './ui/panels/TarjetaVida.tsx'
 import { Sparkline } from './ui/components/Sparkline.tsx'
@@ -16,6 +17,8 @@ import { houseLivingCost } from './sim/state.ts'
 import { TUNABLES } from './sim/tunables.ts'
 import { nivelFatiga } from './sim/formulas.ts'
 import { CONTENT_POR_ID } from './content/contentTypes.ts'
+import { BIG_POR_ID } from './content/bigEvents.ts'
+import { faseActual } from './sim/bigEvents.ts'
 import type { TokenKey } from './ui/theme/palette.ts'
 
 /**
@@ -47,6 +50,15 @@ export function App() {
   // El titulo del directo lo pone el formato: la cabecera dice en todo momento
   // que esta haciendo el creador.
   const formato = CONTENT_POR_ID.get(g.formato)
+  // Durante la emision de un evento extraordinario, el titulo lo pone el
+  // evento: es lo que esta ocurriendo de verdad en el canal.
+  const eventoDef = g.evento ? BIG_POR_ID.get(g.evento.id) : null
+  const emitiendoEvento = faseActual(g.evento)?.fase === 'directo'
+  const tituloDirecto = g.descanso
+    ? 'Fuera unos dias'
+    : emitiendoEvento && eventoDef
+      ? eventoDef.tituloDirecto
+      : (formato?.titulo ?? 'En directo')
 
   return (
     <div className="app">
@@ -59,9 +71,9 @@ export function App() {
       <div className="reproductor">
         <div className="reproductor__principal">
           <PlayerHeader
-            titulo={formato?.titulo ?? 'En directo'}
+            titulo={tituloDirecto}
             espectadores={g.alcance}
-            enDirecto={!paused}
+            enDirecto={!paused && !g.descanso}
           />
 
           <Stage
@@ -113,6 +125,8 @@ export function App() {
       </div>
 
       <Carrera />
+
+      <Momentos />
 
       <Reparto />
 

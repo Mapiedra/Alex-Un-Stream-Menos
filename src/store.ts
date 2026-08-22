@@ -4,6 +4,8 @@ import { cambiarFormato, publicar, step } from './sim/tick.ts'
 import { clipCatch } from './sim/clip.ts'
 import { comprar, desbloquearReparto } from './sim/shop.ts'
 import { resolver } from './sim/lifeEvents.ts'
+import { irseDeVacaciones, puedeIrseDeVacaciones } from './sim/descanso.ts'
+import { prepararEvento } from './sim/bigEvents.ts'
 import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
 
 /** Cada cuantos ms de tiempo real se autoguarda. */
@@ -27,6 +29,8 @@ interface GameStore {
   buy: (id: string) => void
   setFormato: (id: string) => void
   resolverEvento: (opcion: number) => void
+  irDeVacaciones: () => void
+  prepararEvento: () => void
   unlockAllocation: () => void
   setAllocation: (a: Allocation) => void
   setSpeed: (m: number) => void
@@ -108,6 +112,22 @@ export const useGame = create<GameStore>((set, get) => ({
       if (!id) return s
       const game = resolver(s.game, id, opcion)
       guardar(game)
+      return { game }
+    }),
+
+  // Parar es una decision del jugador, y de las importantes: se guarda.
+  irDeVacaciones: () =>
+    set((s) => {
+      if (!puedeIrseDeVacaciones(s.game)) return s
+      const game = irseDeVacaciones({ ...s.game, repartoAntesDeParar: s.game.allocation })
+      guardar(game)
+      return { game }
+    }),
+
+  prepararEvento: () =>
+    set((s) => {
+      const game = prepararEvento(s.game)
+      if (game !== s.game) guardar(game)
       return { game }
     }),
 

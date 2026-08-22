@@ -5,6 +5,8 @@ import { calcResidualTotal } from '../../src/sim/formulas.ts'
 import { siguienteCompra, type Bot } from './bots.ts'
 import { comprar } from '../../src/sim/shop.ts'
 import { resolver } from '../../src/sim/lifeEvents.ts'
+import { irseDeVacaciones, puedeIrseDeVacaciones } from '../../src/sim/descanso.ts'
+import { prepararEvento } from '../../src/sim/bigEvents.ts'
 
 export interface RunResult {
   botId: string
@@ -15,6 +17,9 @@ export interface RunResult {
   comunidadFinal: number
   calidadFinal: number
   fatigaMaxima: number
+  vacaciones: number
+  burnouts: number
+  eventos: number
   ahorrosFinal: number
   compras: number
   /** Coste de vida cubierto por rentas, al final. 1 = justo cubierto. */
@@ -68,8 +73,15 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
       }
     }
 
+    // Parar y prepararse son decisiones del jugador, no del motor.
+    if (bot.prepara && s.evento && !s.evento.preparado) s = prepararEvento(s)
+    if (bot.vacaciones?.(s) && puedeIrseDeVacaciones(s)) {
+      s = irseDeVacaciones({ ...s, repartoAntesDeParar: s.allocation })
+    }
+
     // Un reparto manual pisa al derivado; sin el, mandan las compras.
-    if (bot.allocation) s = { ...s, allocation: bot.allocation(s) }
+    // Durante un descanso NO se pisa: parar significa no producir.
+    if (bot.allocation && !s.descanso) s = { ...s, allocation: bot.allocation(s) }
 
     if (bot.publish(s)) s = publicar(s)
     s = step(s, dt)
@@ -102,6 +114,9 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
     comunidadFinal: s.comunidad,
     calidadFinal: s.calidad,
     fatigaMaxima,
+    vacaciones: s.vacacionesCompletadas,
+    burnouts: s.burnouts,
+    eventos: s.eventosExtraordinarios,
     ahorrosFinal: s.ahorros,
     compras,
     coberturaFinal: calcCobertura(s),

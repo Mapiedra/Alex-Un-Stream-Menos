@@ -31,6 +31,8 @@ const comunidad = correr('comunidad')
 const equilibrado = correr('equilibrado')
 const avaro = correr('avaro')
 const sinDescanso = correr('sin-descanso')
+const vacacionero = correr('vacacionero')
+const derivadoRun = correr('derivado')
 
 describe('ninguna estrategia domina la partida', () => {
   it('el equilibrado se retira antes que cualquier estrategia de un solo eje', () => {
@@ -67,6 +69,58 @@ describe('descansar es rentable, no un capricho', () => {
   })
 })
 
+describe('las vacaciones compensan', () => {
+  /**
+   * Regla 4 de la seccion 12 del GDD: parar debe ser siempre una decision
+   * razonable y, en una partida bien jugada, a menudo optima.
+   *
+   * No se mide por minuto de retiro —ambos llegan a la vez— sino por donde
+   * llegan: el que descansa termina con mucha mas comunidad y mucho mas
+   * colchon, porque el Legado que consolida al volver es permanente.
+   */
+  it('descansar deja mucha mas comunidad que no descansar', () => {
+    expect(vacacionero.comunidadFinal).toBeGreaterThan(equilibrado.comunidadFinal * 1.3)
+  })
+
+  it('descansar deja mas colchon para el retiro', () => {
+    expect(vacacionero.coberturaFinal).toBeGreaterThan(equilibrado.coberturaFinal)
+  })
+
+  it('el que descansa no llega mas tarde por ello', () => {
+    // Si parar retrasase el final, nadie pararia por mucho que compensara.
+    expect(vacacionero.retiroEnMinuto ?? Infinity).toBeLessThanOrEqual(
+      (equilibrado.retiroEnMinuto ?? 0) + 5,
+    )
+  })
+
+  it('el que descansa acumula Legado y el que no, ninguno', () => {
+    expect(vacacionero.vacaciones).toBeGreaterThan(0)
+    expect(equilibrado.vacaciones).toBe(0)
+  })
+})
+
+describe('los eventos extraordinarios no son requisito', () => {
+  /**
+   * Regla 3 del GDD: potentes pero escasos, y NUNCA necesarios para ganar.
+   */
+  it('ningun bot prepara la conferencia y aun asi varios se retiran', () => {
+    // Ni equilibrado ni calidad ni derivado invierten jamas en prepararse.
+    expect(equilibrado.retiroEnMinuto).not.toBeNull()
+    expect(calidad.retiroEnMinuto).not.toBeNull()
+  })
+
+  it('son escasos: unos pocos por partida, no uno cada dos semanas', () => {
+    // Sin reposo efectivo llegaron a salir 131 en una sola partida.
+    for (const r of [equilibrado, calidad, comunidad, derivadoRun]) {
+      expect(r.eventos, `${r.botId} tiene demasiados eventos`).toBeLessThan(15)
+    }
+  })
+
+  it('pero llegan a salir: no son decorativos', () => {
+    expect(equilibrado.eventos).toBeGreaterThan(0)
+  })
+})
+
 describe('la economia del retiro no es trivial', () => {
   it('acumular sin invertir no basta para jubilarse', () => {
     // Si el avaro ganase siempre, los residuales del catalogo estarian
@@ -93,9 +147,8 @@ describe('duracion de la partida', () => {
     // El bot "derivado" nunca toca el reparto: juega como el jugador de los
     // ciclos 1-2, que solo compra. Tarda mas que el equilibrado, pero llega.
     // Si dejara de llegar, la primera mitad de la partida seria un callejon.
-    const derivado = correr('derivado')
-    expect(derivado.retiroEnMinuto).not.toBeNull()
-    expect(derivado.retiroEnMinuto ?? 0).toBeGreaterThan(equilibrado.retiroEnMinuto ?? 0)
+    expect(derivadoRun.retiroEnMinuto).not.toBeNull()
+    expect(derivadoRun.retiroEnMinuto ?? 0).toBeGreaterThan(equilibrado.retiroEnMinuto ?? 0)
   })
 
   it('ninguna politica se retira en los primeros veinte minutos', () => {

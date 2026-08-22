@@ -126,6 +126,44 @@ export const TUNABLES = {
     perSecondAtFullLife: 0.02,
   },
 
+  /** VACACIONES — el GDD las quiere razonables y a menudo optimas (6.4). */
+  vacaciones: {
+    semanas: 3,
+    recuperaFatigaPorSegundo: 0.006,
+    recuperaVidaPorSegundo: 0.008,
+    /** Empujon de hype al volver: "he estado fuera" pasa a "vuelvo con ganas". */
+    hypeVuelta: 0.8,
+    calidadVuelta: 1.18,
+    semanasBonus: 4,
+  },
+
+  /** BURNOUT — caro, pero NUNCA terminal (6.5). */
+  burnout: {
+    /** Dura mas que unas vacaciones: parar tarde sale peor que parar a tiempo. */
+    semanas: 5,
+    /** Fraccion de comunidad que se pierde al desaparecer de golpe. */
+    danoComunidad: 0.18,
+    recuperaFatigaPorSegundo: 0.005,
+    recuperaVidaPorSegundo: 0.005,
+  },
+
+  /** LEGADO — prestigio suave al cerrar ciclos habiendo descansado. */
+  legado: {
+    /**
+     * Comunidad que se consume. El prestigio cuesta algo o no es decision.
+     *
+     * Ojo al calibrarlo: con 0.15 y multiplicadores del 12-15%, el banco
+     * media que irse de vacaciones salia LIGERAMENTE PEOR que no irse. El GDD
+     * (regla 4 de la seccion 12) pide justo lo contrario: que parar sea
+     * siempre razonable y a menudo optimo.
+     */
+    fraccionComunidad: 0.07,
+    eficienciaPorCiclo: 1.2,
+    retencionPorCiclo: 1.25,
+    maxEficiencia: 2,
+    maxRetencion: 2.5,
+  },
+
   /** MOMENTO CLIPPEABLE — contrato de accesibilidad. */
   clip: {
     /** Segundos de ventana para reaccionar. Nunca por debajo de 3. */

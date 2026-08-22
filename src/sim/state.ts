@@ -5,13 +5,15 @@ import { FORMATO_INICIAL } from '../content/contentTypes.ts'
 import { crearHistorial, type Historial } from './historial.ts'
 import { houseStage } from '../content/houseStages.ts'
 import type { ModificadorActivo } from './lifeEvents.ts'
+import type { EventoActivo } from './bigEvents.ts'
+import type { Descanso } from './descanso.ts'
 import { TUNABLES } from './tunables.ts'
 
 /**
  * Version del formato de guardado. Se sube cada vez que GameState cambia de
  * forma, y se anade la migracion correspondiente en save/migrate.ts.
  */
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6
 
 /**
  * Reparto del tiempo del creador. Siempre suma 1.
@@ -71,6 +73,15 @@ export interface GameState {
 
   /** El unico clicker del juego. Nunca obligatorio. */
   clip: ClipState
+
+  /** Evento extraordinario en curso, con su fase. */
+  evento: EventoActivo | null
+  /** Semana de la ultima aparicion de cada evento, para el reposo. */
+  ultimoBigEvent: Record<string, number>
+  /** Parada en curso: vacaciones o burnout. */
+  descanso: Descanso | null
+  /** Reparto guardado antes de parar, para restaurarlo al volver. */
+  repartoAntesDeParar: Allocation | null
 
   /**
    * Tarjeta de vida esperando respuesta. Mientras no sea null, la simulacion
@@ -145,6 +156,11 @@ export function createInitialState(seed = 1): GameState {
 
     formato: FORMATO_INICIAL,
     clip: createClipState(),
+
+    evento: null,
+    ultimoBigEvent: {},
+    descanso: null,
+    repartoAntesDeParar: null,
 
     eventoPendiente: null,
     eventosVistos: [],

@@ -1045,3 +1045,65 @@
   letter-spacing: 0.5px;
   color: var(--c-textBright);
 }
+
+/* ---------- Momentos extraordinarios y descanso ---------- */
+.momentos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-6);
+  padding: var(--space-4);
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+}
+
+.momentos__col {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+}
+
+.momentos__meta {
+  margin: 0;
+  font-size: 11px;
+  color: var(--c-textDim);
+}
+
+.momentos__boton {
+  justify-self: start;
+  margin-top: var(--space-2);
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: none;
+}
+
+/* Solo llama la atencion cuando de verdad hace falta parar. */
+.momentos__boton[data-urgente="true"] {
+  border-color: var(--c-warning);
+  color: var(--c-warning);
+}
+
+.momentos__barra {
+  height: 8px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  margin-top: var(--space-2);
+}
+
+.momentos__barra span {
+  display: block;
+  height: 100%;
+  background: var(--c-vida);
+}
+
+/* La parada obligada se pinta distinto: no es lo mismo elegir que no elegir. */
+.momentos__barra[data-tipo="burnout"] span {
+  background: var(--c-fatiga);
+}
+
+.momentos__legado {
+  margin: var(--space-3) 0 0;
+  font-size: 11px;
+  color: var(--c-calidad);
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--space-2);
+}

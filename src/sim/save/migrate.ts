@@ -68,6 +68,19 @@ export const MIGRACIONES: Record<number, Migracion> = {
     modificadores: [],
     schemaVersion: 5,
   }),
+
+  /**
+   * v5 -> v6: aparecen los eventos extraordinarios, las vacaciones y el
+   * burnout. Una partida vieja se reanuda sin nada en curso.
+   */
+  5: (s) => ({
+    ...s,
+    evento: null,
+    ultimoBigEvent: {},
+    descanso: null,
+    repartoAntesDeParar: null,
+    schemaVersion: 6,
+  }),
 }
 
 export class SaveIncompatible extends Error {}

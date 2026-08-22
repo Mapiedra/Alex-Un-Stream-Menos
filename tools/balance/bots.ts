@@ -19,6 +19,10 @@ export interface Bot {
   prioridad: Categoria[]
   /** Compra siquiera? El bot avaro casi no. */
   compra?: (s: GameState) => boolean
+  /** Se va de vacaciones? Si se omite, no para nunca por voluntad propia. */
+  vacaciones?: (s: GameState) => boolean
+  /** Invierte en preparar la conferencia cuando la anuncian? */
+  prepara?: boolean
   publish: (s: GameState) => boolean
 }
 
@@ -91,6 +95,36 @@ export const BOTS: Bot[] = [
     descripcion: 'Clon del equilibrado que nunca descansa. Control del valor de parar.',
     allocation: () => ({ produccion: 0.7, comunidad: 0.25, vida: 0.05, descanso: 0 }),
     prioridad: TODO,
+    publish: (s) => cada(s, 10),
+  },
+  {
+    id: 'vacacionero',
+    descripcion: 'Como el equilibrado, pero para cada cierto tiempo por el Legado.',
+    allocation: (s) =>
+      s.fatiga > 0.55
+        ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
+        : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
+    prioridad: TODO,
+    /**
+     * Para cada 25 semanas, no cuando se cansa.
+     *
+     * El banco enseno que un jugador equilibrado NUNCA llega a cansarse de
+     * verdad —su fatiga maxima es 0.06—, asi que un bot que solo parase por
+     * agotamiento no pararia jamas. El motivo real para irse de vacaciones no
+     * es el cansancio: es el Legado que consolida al cerrar un ciclo.
+     */
+    vacaciones: (s) => s.week > 0 && s.week % 25 === 0,
+    publish: (s) => cada(s, 10),
+  },
+  {
+    id: 'aprovechado',
+    descripcion: 'Como el equilibrado, pero prepara siempre la conferencia.',
+    allocation: (s) =>
+      s.fatiga > 0.55
+        ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
+        : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 },
+    prioridad: TODO,
+    prepara: true,
     publish: (s) => cada(s, 10),
   },
   {

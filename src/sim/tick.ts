@@ -14,6 +14,8 @@ import { CHAT_BUFFER, chatStep } from './chat.ts'
 import { CONTENT_POR_ID, FORMATO_INICIAL } from '../content/contentTypes.ts'
 import { muestrear } from './historial.ts'
 import { avanzarCiclo, puedeAvanzar } from './cycles.ts'
+import { avanzarSemana, multEvento, sortearEvento } from './bigEvents.ts'
+import { aplicarRecuperacion, avanzarDescanso, entrarEnBurnout } from './descanso.ts'
 import {
   SEMANAS_ENTRE_EVENTOS,
   caducarModificadores,
@@ -56,6 +58,10 @@ export function step(state: GameState, dtMs: number): GameState {
   // --- Modificadores temporales de las tarjetas de vida -------------------
   const modificadores = caducarModificadores(state.modificadores, state.week)
   const mods = multModificadores(modificadores)
+  // Un evento extraordinario en curso reescribe las reglas mientras dura.
+  const ev = multEvento(state.evento)
+  // Parado no se produce: ni vacaciones ni burnout generan alcance.
+  const parado = state.descanso !== null
 
   // --- Calidad (derivada) -------------------------------------------------
   const calidad = calcCalidad(state.vida, state.fatiga, state.multCalidad * mods.calidad)
@@ -71,8 +77,14 @@ export function step(state: GameState, dtMs: number): GameState {
     state.hype,
     clipMultiplier(state.clip),
   )
-  const ganancia =
-    produccion * state.multAlcance * mods.alcance * formato.alcance * ALCANCE_POR_PRODUCCION
+  const ganancia = parado
+    ? 0
+    : produccion *
+      state.multAlcance *
+      mods.alcance *
+      formato.alcance *
+      ev.alcance *
+      ALCANCE_POR_PRODUCCION
   const decay = calcAlcanceDecayRate(state.comunidad, state.legadoRetencion)
   const alcance = Math.max(0, state.alcance + (ganancia - state.alcance * decay) * dt)
 
@@ -84,7 +96,7 @@ export function step(state: GameState, dtMs: number): GameState {
   const conversion = calcConversion(
     state.alcance,
     calidad,
-    AFINIDAD_BASE * formato.afinidad,
+    AFINIDAD_BASE * formato.afinidad * ev.afinidad,
     alloc.comunidad,
     state.comunidad,
   )
@@ -96,14 +108,20 @@ export function step(state: GameState, dtMs: number): GameState {
     alloc.vida * TUNABLES.vida.recoveryPerSecondAtFullRest +
     alloc.descanso * TUNABLES.vida.recoveryPerSecondAtFullRest -
     alloc.produccion * TUNABLES.vida.drainPerSecondAtFullProduction
-  const vida = clamp01(state.vida + vidaDelta * dt)
+  let vida = clamp01(state.vida + vidaDelta * dt)
 
   // Los formatos ligeros cansan menos: cocinar en directo no es lo mismo que
   // ocho horas de un shooter competitivo.
   const fatigaDelta =
-    alloc.produccion * TUNABLES.fatiga.gainPerSecondAtFullProduction * formato.coste -
+    alloc.produccion * TUNABLES.fatiga.gainPerSecondAtFullProduction * formato.coste * ev.fatiga -
     calcRecuperacionFatiga(state.vida, alloc.descanso + alloc.vida * 0.5)
-  const fatiga = clamp01(state.fatiga + fatigaDelta * dt)
+  let fatiga = clamp01(state.fatiga + fatigaDelta * dt)
+
+  if (state.descanso) {
+    const r = aplicarRecuperacion({ vida, fatiga }, state.descanso.tipo, dt)
+    vida = r.vida
+    fatiga = r.fatiga
+  }
 
   // --- Hype ---------------------------------------------------------------
   const hypeDecay = decayRateFromHalfLife(TUNABLES.hype.halfLifeSeconds)
@@ -116,7 +134,7 @@ export function step(state: GameState, dtMs: number): GameState {
 
   // --- Economia -----------------------------------------------------------
   // El directo solidario no se emite en el canal propio: no genera ingresos.
-  const factorIngresos = formato.ingresos ?? 1
+  const factorIngresos = (formato.ingresos ?? 1) * ev.ingresos
   const ingresosPorSegundo =
     calcIngresosDirectos(alcance, comunidad) * factorIngresos + calcResidualTotal(state)
   const costeVidaPorSegundo = houseLivingCost(state.houseStage) / TUNABLES.secondsPerWeek
@@ -138,10 +156,100 @@ export function step(state: GameState, dtMs: number): GameState {
       ? [...state.chat, ...chat.mensajes].slice(-CHAT_BUFFER)
       : state.chat
 
+  // --- Paso de semana -----------------------------------------------------
+  // Los eventos extraordinarios y el descanso se cuentan por semanas, no por
+  // ticks: solo hay que tocarlos cuando el calendario pasa de pagina.
+  const semanaPrevia = state.week
+  const semanaNueva = Math.floor(
+    (state.elapsedMs + dtMs * TUNABLES.gameSpeed) / 1000 / TUNABLES.secondsPerWeek,
+  )
+  const cambiaSemana = semanaNueva > semanaPrevia
+
+  let evento = state.evento
+  let ultimoBigEvent = state.ultimoBigEvent
+  let descanso = state.descanso
+  let eventosExtraordinarios = state.eventosExtraordinarios
+  let comunidadFinal = comunidad
+  let hypeFinal = hype
+  let modsFinal = modificadores
+  let vacacionesCompletadas = state.vacacionesCompletadas
+  let allocFinal = state.allocation
+  let repartoAntesDeParar = state.repartoAntesDeParar
+  let burnouts = state.burnouts
+  let legadoEficiencia = state.legadoEficiencia
+  let legadoRetencion = state.legadoRetencion
+  let rngSemana = chat.rng
+
+  if (cambiaSemana) {
+    // Fin del descanso: aqui es donde la vuelta de vacaciones da su bonus.
+    if (descanso) {
+      const fin = avanzarDescanso({
+        ...state,
+        week: semanaNueva,
+        comunidad: comunidadFinal,
+        hype: hypeFinal,
+        modificadores: modsFinal,
+      })
+      descanso = fin.state.descanso
+      hypeFinal = fin.state.hype
+      modsFinal = fin.state.modificadores
+      vacacionesCompletadas = fin.state.vacacionesCompletadas
+      // Volver de vacaciones consolida Legado, y eso toca comunidad y
+      // multiplicadores permanentes: hay que leerlos de vuelta o el calculo
+      // se hace y se tira.
+      comunidadFinal = fin.state.comunidad
+      legadoEficiencia = fin.state.legadoEficiencia
+      legadoRetencion = fin.state.legadoRetencion
+      if (fin.terminado) {
+        // Al volver se recupera el reparto que habia antes de parar.
+        allocFinal = repartoAntesDeParar ?? allocFinal
+        repartoAntesDeParar = null
+      }
+    } else {
+      const avance = avanzarSemana(evento, semanaNueva, ultimoBigEvent)
+      evento = avance.evento
+      ultimoBigEvent = avance.ultimoBigEvent
+      if (avance.completado) eventosExtraordinarios += 1
+
+      if (!evento) {
+        // Ojo con el `evento: null`: sin el, este objeto arrastra el evento
+        // viejo de `state` y sortearEvento —que devuelve el que ya hay— lo
+        // resucitaba cada semana. La conferencia se completaba una y otra vez
+        // sin terminar nunca.
+        const sorteo = sortearEvento(
+          { ...state, week: semanaNueva, ultimoBigEvent, evento: null },
+          rngSemana,
+        )
+        rngSemana = sorteo.rng
+        evento = sorteo.evento
+      }
+    }
+  }
+
+  /**
+   * Burnout.
+   *
+   * Es la consecuencia que faltaba desde el primer dia: sin ella la fatiga
+   * podia clavarse en 1.0 para siempre y la partida entraba en un pozo del
+   * que no salia. Cuesta semanas y comunidad, pero NUNCA termina la partida.
+   */
+  if (!descanso && fatiga >= TUNABLES.fatiga.burnoutThreshold) {
+    const forzado = entrarEnBurnout({
+      ...state,
+      comunidad: comunidadFinal,
+      burnouts,
+    })
+    descanso = forzado.descanso
+    comunidadFinal = forzado.comunidad
+    burnouts = forzado.burnouts
+    repartoAntesDeParar = repartoAntesDeParar ?? state.allocation
+    allocFinal = forzado.allocation
+  }
+
   // --- Tarjeta de vida ----------------------------------------------------
   // Se sortea al cumplirse el intervalo. La partida se detendra en el
   // siguiente tick, cuando eventoPendiente deje de ser null.
-  let rngFinal = chat.rng
+  let rngFinal = rngSemana
   let eventoPendiente = state.eventoPendiente
   let ultimoEventoSemana = state.ultimoEventoSemana
   const semanaActual = Math.floor((state.elapsedMs + dtMs * TUNABLES.gameSpeed) / 1000 / TUNABLES.secondsPerWeek)
@@ -166,7 +274,17 @@ export function step(state: GameState, dtMs: number): GameState {
     ...state,
     rng: rngFinal,
     clip: clipRes.clip,
-    modificadores,
+    evento,
+    ultimoBigEvent,
+    descanso,
+    repartoAntesDeParar,
+    allocation: allocFinal,
+    eventosExtraordinarios,
+    vacacionesCompletadas,
+    burnouts,
+    legadoEficiencia,
+    legadoRetencion,
+    modificadores: modsFinal,
     eventoPendiente,
     ultimoEventoSemana,
     historial,
@@ -176,11 +294,11 @@ export function step(state: GameState, dtMs: number): GameState {
     elapsedMs,
     week,
     alcance,
-    comunidad,
+    comunidad: comunidadFinal,
     calidad,
     vida,
     fatiga,
-    hype,
+    hype: hypeFinal,
     ideas,
     ahorros,
     ingresosPorSegundo,
