@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { BOTS } from '../tools/balance/bots.ts'
-import { runBot } from '../tools/balance/harness.ts'
+import { cruceSostenido, runBot } from '../tools/balance/harness.ts'
 
 /**
  * Las reglas de balance de la seccion 12 del GDD, como tests.
@@ -10,10 +10,9 @@ import { runBot } from '../tools/balance/harness.ts'
  * de llegar a nadie. Es la unica forma de que "el streaming intenso debe ganar
  * a corto plazo y perder a medio" sea algo mas que una frase en un documento.
  *
- * ESTADO: con las etapas de casa de F3 —cada una encarece el coste de vida—
- * la partida equilibrada ya cae dentro de la banda objetivo de 90-160 min. La
- * banda del test es algo mas ancha porque F4 (vacaciones y eventos
- * extraordinarios) volvera a moverla, y se estrechara del todo en F6.
+ * ESTADO: calibrado en F6. La partida equilibrada se retira sobre el minuto
+ * 129 midiendo la condicion REAL del retiro, no un proxy economico, y la
+ * banda del test ya es la del GDD.
  */
 
 const bot = (id: string) => {
@@ -47,8 +46,35 @@ describe('ninguna estrategia domina la partida', () => {
   })
 })
 
-describe('forzar horas no funciona a medio plazo', () => {
-  it('el grind puro nunca llega a retirarse', () => {
+describe('forzar horas funciona a corto plazo y pierde igual', () => {
+  /**
+   * Regla 2 de la seccion 12, y la que mas costo entender.
+   *
+   * "El streaming intenso debe ganar a corto plazo y perder frente a una
+   * estrategia equilibrada a medio plazo." Durante cinco fases se interpreto
+   * como que el grind debia caer tambien en ALCANCE, y no habia forma de
+   * cuadrarlo sin romper el resto del juego.
+   *
+   * La lectura buena es otra: el grind gana en lo que optimiza —las visitas,
+   * la metrica que se ve— y aun asi pierde la partida, porque las visitas no
+   * construyen comunidad, no aguantan las pausas y no llevan al retiro. No
+   * hacia falta que el grind cayera en visitas. Hacia falta que las visitas no
+   * bastaran.
+   */
+
+  it('el grind va por delante en alcance buena parte de la partida', () => {
+    const cruce = cruceSostenido(grind, equilibrado, 'alcance')
+    expect(cruce === null || cruce > 35, 'el equilibrado adelanta demasiado pronto').toBe(true)
+  })
+
+  it('pero pierde la comunidad desde el principio y no la recupera', () => {
+    const cruce = cruceSostenido(grind, equilibrado, 'comunidad')
+    expect(cruce).not.toBeNull()
+    expect(cruce ?? Infinity).toBeLessThan(60)
+    expect(equilibrado.comunidadFinal).toBeGreaterThan(grind.comunidadFinal * 2)
+  })
+
+  it('y no llega a retirarse nunca', () => {
     expect(grind.retiroEnMinuto).toBeNull()
   })
 
@@ -158,11 +184,11 @@ describe('la economia del retiro no es trivial', () => {
 
 describe('duracion de la partida', () => {
   it('la partida equilibrada dura lo que deberia durar', () => {
-    // Objetivo del GDD: ~2 horas. La banda del test es algo mas ancha porque
-    // F4 volvera a mover la cifra al anadir vacaciones y eventos.
+    // Objetivo del GDD: ~2 horas de simulacion activa. Una partida real dura
+    // mas, porque el tiempo leyendo tarjetas no cuenta.
     const min = equilibrado.retiroEnMinuto ?? 0
-    expect(min).toBeGreaterThan(80)
-    expect(min).toBeLessThan(180)
+    expect(min).toBeGreaterThan(90)
+    expect(min).toBeLessThan(160)
   })
 
   it('dejar que las compras decidan tus horas tambien llega a buen puerto', () => {

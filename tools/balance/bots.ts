@@ -10,8 +10,14 @@ import type { Allocation, GameState } from '../../src/sim/state.ts'
  * de nada, y el juego se lo dice: la ultima condicion de la seccion 11 es
  * sostenerlo TRABAJANDO POCO. Los bots serios bajan las horas cuando pueden,
  * que es justo lo que el GDD quiere que el jugador aprenda.
+ *
+ * El disparador incluye el ciclo 5 ademas de la cobertura porque con solo la
+ * cobertura habia filo de navaja: un bot con cobertura 1.09 y umbral 1.10 no
+ * bajaba horas nunca, y por tanto no cumplia la condicion de las horas, y por
+ * tanto no se retiraba jamas. Un jugador de carne y hueso no se queda
+ * atrapado en eso: ve el panel y decide.
  */
-const enLibertad = (s: GameState): boolean => cobertura(s) >= 1.1
+const enLibertad = (s: GameState): boolean => cobertura(s) >= 1 || s.cycle >= 5
 
 const LIBRE: Allocation = { produccion: 0.15, comunidad: 0.35, vida: 0.25, descanso: 0.25 }
 

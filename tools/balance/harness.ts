@@ -41,6 +41,40 @@ export interface RunResult {
  */
 export const calcCobertura = cobertura
 
+/**
+ * Minuto en que una politica adelanta a otra DE FORMA SOSTENIDA.
+ *
+ * El alcance es picudo por naturaleza —publicaciones, hype, fases de evento—
+ * asi que un cruce de una sola muestra no significa nada. Un detector ingenuo
+ * daba "adelantamiento en el minuto 15" cuando en realidad el grind seguia por
+ * delante otros cuarenta minutos: era un pico suelto.
+ *
+ * Se considera adelantamiento cuando el retador lidera en al menos 4 de las 5
+ * muestras siguientes y no vuelve a perder el liderato de forma clara.
+ */
+export function cruceSostenido(
+  lider: RunResult,
+  retador: RunResult,
+  metrica: 'alcance' | 'comunidad' = 'alcance',
+): number | null {
+  const n = Math.min(lider.muestras.length, retador.muestras.length)
+
+  for (let i = 0; i < n; i++) {
+    const ventana = Math.min(5, n - i)
+    if (ventana < 3) break
+
+    let aFavor = 0
+    for (let j = i; j < i + ventana; j++) {
+      const a = lider.muestras[j]
+      const b = retador.muestras[j]
+      if (a && b && b[metrica] > a[metrica]) aFavor++
+    }
+
+    if (aFavor >= ventana - 1) return lider.muestras[i]?.minuto ?? null
+  }
+  return null
+}
+
 export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = {}): RunResult {
   const maxMinutes = opts.maxMinutes ?? 240
   let s = createInitialState(opts.seed ?? 1)

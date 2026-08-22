@@ -1,5 +1,5 @@
 import { BOTS } from './bots.ts'
-import { runBot } from './harness.ts'
+import { cruceSostenido, runBot } from './harness.ts'
 
 /**
  * Banco de balance. `npm run balance`
@@ -17,7 +17,7 @@ console.log('\n  BANCO DE BALANCE — minuto de retiro por politica\n')
 console.log(
   `  ${pad('bot', 14)}${pad('retiro', 10)}${pad('cobertura', 11)}${pad('comunidad', 11)}${pad('calidad', 9)}${pad('fatiga', 9)}${pad('compras', 9)}vac/burn/ev`,
 )
-console.log('  ' + '-'.repeat(70))
+console.log('  ' + '-'.repeat(84))
 
 for (const r of results) {
   const retiro = r.retiroEnMinuto === null ? '  —' : `${r.retiroEnMinuto.toFixed(0)} min`
@@ -26,19 +26,58 @@ for (const r of results) {
   )
 }
 
-console.log('\n  Comparativa de alcance por minuto (grind vs equilibrado)\n')
+/**
+ * Ritmo de la partida, no solo su final.
+ *
+ * La regla 2 de la seccion 12 del GDD no habla de quien gana: habla de QUIEN
+ * VA POR DELANTE Y CUANDO. "El streaming intenso debe ganar a corto plazo y
+ * perder frente a una estrategia equilibrada a medio plazo." Eso solo se ve
+ * mirando la curva minuto a minuto, y por eso el resumen de arriba nunca
+ * pudo detectar que esa regla llevaba sin cumplirse desde el primer dia.
+ */
+console.log('\n  RITMO — quien va por delante en alcance\n')
+
 const grind = results.find((r) => r.botId === 'grind')
 const eq = results.find((r) => r.botId === 'equilibrado')
+
 if (grind && eq) {
-  console.log(`  ${pad('min', 7)}${pad('grind', 12)}equilibrado`)
-  for (let i = 0; i < Math.max(grind.muestras.length, eq.muestras.length); i += 2) {
+  console.log(`  ${pad('min', 7)}${pad('grind', 12)}${pad('equilibrado', 14)}lider`)
+  console.log('  ' + '-'.repeat(48))
+
+  const cruceAlcance = cruceSostenido(grind, eq, 'alcance')
+  const cruceComunidad = cruceSostenido(grind, eq, 'comunidad')
+
+  for (let i = 0; i < Math.min(grind.muestras.length, 16); i++) {
     const g = grind.muestras[i]
     const e = eq.muestras[i]
-    if (!g && !e) continue
-    const minuto = g?.minuto ?? e?.minuto ?? 0
+    if (!g || !e) continue
+
+    const lider = g.alcance > e.alcance ? 'grind' : 'equilibrado'
+
     console.log(
-      `  ${pad(String(minuto), 7)}${pad((g?.alcance ?? 0).toFixed(0), 12)}${(e?.alcance ?? 0).toFixed(0)}`,
+      `  ${pad(String(g.minuto), 7)}${pad(g.alcance.toFixed(0), 12)}${pad(e.alcance.toFixed(0), 14)}${lider}`,
     )
   }
+
+  /**
+   * Dos curvas, dos lecturas.
+   *
+   * En ALCANCE el grind puede ir por delante media partida: es lo que
+   * optimiza y se le da bien. En COMUNIDAD lo pierde pronto y ya no lo
+   * recupera. Y al final no se retira nunca.
+   *
+   * Esa es la regla 2 del GDD bien entendida: forzar horas funciona para la
+   * metrica que se ve, y aun asi pierde la partida. No hacia falta que el
+   * grind cayera tambien en visitas; hacia falta que las visitas no bastaran.
+   */
+  console.log('')
+  console.log(
+    `  Alcance   — el equilibrado adelanta en el minuto ${cruceAlcance ?? '—'} (o nunca)`,
+  )
+  console.log(`  Comunidad — el equilibrado adelanta en el minuto ${cruceComunidad ?? '—'}`)
+  console.log(
+    `  Retiro    — grind: ${grind.retiroEnMinuto ?? 'nunca'} · equilibrado: ${eq.retiroEnMinuto ?? 'nunca'}`,
+  )
 }
+
 console.log('')

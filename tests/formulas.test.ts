@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applySoftCap,
+  castigoFatiga,
   calcAlcanceDecayRate,
   calcCalidad,
   calcConversion,
@@ -18,11 +19,41 @@ describe('calidad', () => {
     expect(calcCalidad(1, 0, 1)).toBeGreaterThan(calcCalidad(0, 0, 1))
   })
 
-  it('la fatiga castiga mas cuanto mas alta (exponente > 1)', () => {
-    const sinFatiga = calcCalidad(1, 0, 1)
-    const primerCuarto = sinFatiga - calcCalidad(1, 0.25, 1)
-    const ultimoCuarto = calcCalidad(1, 0.75, 1) - calcCalidad(1, 1, 1)
-    expect(ultimoCuarto).toBeLessThan(primerCuarto)
+  it('estar cansado sale gratis hasta la saturacion', () => {
+    /**
+     * Es la secuencia del GDD (6.5): fatiga, DESPUES saturacion y finalmente
+     * burnout. Acumular cansancio no se nota en lo que haces hasta que cruzas
+     * el umbral; antes estas cansado, no roto.
+     *
+     * Hasta F6 la calidad se degradaba desde el primer segundo de fatiga, y
+     * eso hacia que forzar horas no funcionase NUNCA — ni siquiera a corto
+     * plazo, que es lo que el GDD pide explicitamente.
+     */
+    const umbral = TUNABLES.fatiga.saturationThreshold
+    expect(castigoFatiga(0)).toBe(1)
+    expect(castigoFatiga(umbral / 2)).toBe(1)
+    expect(castigoFatiga(umbral)).toBe(1)
+  })
+
+  it('pasada la saturacion la caida es inmediata y brusca', () => {
+    /**
+     * El castigo no se reparte suave por el tramo final: muerde nada mas
+     * cruzar el umbral. Es deliberado — el aviso de saturacion llega antes,
+     * asi que cruzarlo es una decision, y las decisiones tienen que notarse.
+     * Para cuando llegas al burnout no queda casi nada de calidad.
+     */
+    const umbral = TUNABLES.fatiga.saturationThreshold
+    const tramo = 1 - umbral
+
+    expect(castigoFatiga(umbral + tramo / 3)).toBeLessThan(0.6)
+    expect(castigoFatiga(TUNABLES.fatiga.burnoutThreshold)).toBeLessThan(0.3)
+    expect(castigoFatiga(umbral + tramo / 2)).toBeLessThan(
+      castigoFatiga(umbral + tramo / 4),
+    )
+  })
+
+  it('con fatiga total la calidad se anula igualmente', () => {
+    expect(castigoFatiga(1)).toBe(0)
   })
 
   it('el techo blando frena, pero no bloquea', () => {

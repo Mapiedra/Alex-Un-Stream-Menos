@@ -24,8 +24,16 @@ export const TUNABLES = {
   alcance: {
     /** Vida media en segundos sin comunidad que lo proteja. */
     halfLifeSeconds: 45,
-    /** Cuanta comunidad hace falta para reducir el decaimiento a la mitad. */
-    shieldK: 2000,
+    /**
+     * Cuanta comunidad hace falta para reducir el decaimiento a la mitad.
+     *
+     * Calibrado en F6: con 2000, una comunidad de diez minutos ya protegia el
+     * alcance casi del todo, y la estrategia equilibrada adelantaba al grind
+     * en el minuto 5 — el GDD lo quiere entre el 35 y el 60. El escudo tiene
+     * que importar a escala de comunidad MADURA, no de comunidad recien
+     * nacida.
+     */
+    shieldK: 25_000,
     /**
      * Fraccion del decaimiento base que NUNCA se puede evitar, por mucha
      * comunidad que tengas. Sin este suelo el crecimiento no tiene techo.
@@ -70,7 +78,7 @@ export const TUNABLES = {
 
   /** FATIGA — 0..1, coste acumulado de trabajar. */
   fatiga: {
-    gainPerSecondAtFullProduction: 0.0006,
+    gainPerSecondAtFullProduction: 0.0002,
     /** La recuperacion escala con la vida: gente descansada se recupera antes. */
     recoveryPerSecondBase: 0.0015,
     recoveryLifeBonus: 0.004,
@@ -93,8 +101,26 @@ export const TUNABLES = {
 
   /** ECONOMIA. */
   economia: {
-    /** Ingresos por unidad de alcance y segundo. */
-    cpmPerAlcance: 0.000009,
+    /**
+     * Ingresos por unidad de alcance y segundo: la publicidad.
+     *
+     * Calibrado en F6. Con 0.000009 las visitas apenas pagaban nada, asi que
+     * quien forzaba horas se quedaba sin dinero para comprar NADA —un bot de
+     * grind puro compraba una sola mejora en toda la partida— y perdia desde
+     * el minuto cinco. El GDD quiere lo contrario: que forzar funcione a corto
+     * plazo. Las visitas tienen que pagar de verdad; lo que no tienen que
+     * hacer es durar.
+     */
+    cpmPerAlcance: 0.00005,
+    /**
+     * Techo asintotico de la publicidad, igual que el de la comunidad.
+     *
+     * Sin el, subir el CPM para que el grind pudiera financiarse inflaba
+     * tambien el dinero del tramo final y la partida se acababa en el minuto
+     * 57. Con saturacion, las primeras visitas pagan bien y el millon de
+     * visitas no paga cien veces mas — que ademas es como funciona.
+     */
+    alcanceSaturationK: 30_000,
     /** Ingresos por unidad de comunidad y segundo (suscripciones, apoyos). */
     incomePerComunidad: 0.00002,
     /**
@@ -110,8 +136,17 @@ export const TUNABLES = {
 
   /** CATALOGO — la cola larga que hace posible el retiro. */
   catalogo: {
-    /** Ingreso base por segundo de una publicacion recien salida. */
-    residualPerPublication: 0.0000085,
+    /**
+     * Ingreso base por segundo de una publicacion recien salida.
+     *
+     * Calibrado en F6, y de largo el numero que mas se ha movido. El diseno
+     * dice que el catalogo es el motor del retiro —vives de lo que ya
+     * publicaste— pero durante cuatro fases aporto alrededor del 1% de la
+     * cobertura: el retiro se decidia en realidad por acumular ahorros, que es
+     * justo la lectura que el juego NO quiere. Subirlo pone el peso donde
+     * tiene que estar.
+     */
+    residualPerPublication: 0.0028,
     /** Vida media del decaimiento de una publicacion, en semanas. */
     decayHalfLifeWeeks: 8,
     /**

@@ -13,24 +13,12 @@ Ideas fuera del alcance de la fase actual. Aqui van para no contaminar el sprint
 
 ## Pendientes conocidos, con fase asignada
 
-### "El grind gana a corto plazo" no se cumple — F6
-La regla del GDD dice que el streaming intenso debe ganar a corto y perder a
-medio plazo. Hoy pierde tambien a corto: la estrategia equilibrada adelanta al
-grind ya en el minuto 10, porque el grind se queda sin calidad muy rapido y
-ademas no tiene comunidad que le proteja el alcance. Requiere que la fatiga
-muerda mas tarde y mas de golpe.
-
-### La fatiga es inerte para quien juega equilibrado — F6
-El banco mide que un jugador equilibrado nunca pasa de 0.06 de fatiga: el
-sistema solo muerde a quien fuerza a proposito. Puede estar bien —castigar el
-grind es justo su trabajo— pero significa que la mitad "descansar" de la tesis
-del GDD se sostiene entera sobre el Legado, no sobre el agotamiento. Conviene
-decidir en F6 si se sube el coste de las horas o se deja asi a proposito.
-
-### La banda de duracion, otra vez a revisar — F6
-Con F4 el equilibrado se retira sobre el minuto 100. La banda del test sigue
-siendo 80-180, mas ancha que el objetivo de 90-160, porque el contenido de F5
-(mas tarjetas, escena final) volvera a moverla.
+### La fatiga sigue siendo inerte para quien juega equilibrado — decidido
+Un jugador equilibrado no pasa de 0.06 de fatiga. Se ha decidido DEJARLO ASI:
+desde F6 la calidad solo se resiente pasada la saturacion, asi que acumular
+algo de cansancio no deberia doler. La fatiga es el castigo de forzar, no un
+impuesto sobre jugar. La mitad "descansar" de la tesis se sostiene sobre el
+Legado y sobre la condicion de retiro, que exige haber parado al menos una vez.
 
 ### Audio — pendiente
 F5 contemplaba audio y no se ha hecho: no hay assets ni fuente para ellos, y
@@ -42,6 +30,12 @@ El panel del navegador no se ha mostrado en ninguna sesion, asi que el aspecto
 REAL del juego —colores en pantalla, escena, chat en movimiento, escalado del
 pixel art— sigue sin verse. Todo se ha verificado por DOM y por tests. Es lo
 primero que habria que mirar con ojos humanos.
+
+### Playtests reales — F6, pendiente
+El protocolo esta escrito en `docs/protocolo-playtest.md` pero no se ha
+ejecutado: hacen falta 5-8 personas y dos horas cada una. Es lo unico de F6
+que no se puede automatizar, y las cinco hipotesis que plantea son
+exactamente las que el banco de balance NO puede comprobar.
 
 ## Decisiones que conviene revisar antes de publicar — F7
 

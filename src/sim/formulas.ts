@@ -7,18 +7,43 @@ import type { GameState } from './state.ts'
  */
 
 /**
- * CALIDAD = base x f(vida) x (1 - fatiga)^p x mejoras, con techo blando.
+ * CALIDAD = base x f(vida) x castigoDeFatiga x mejoras, con techo blando.
  *
- * La fatiga castiga con exponente > 1: los primeros puntos apenas se notan y
- * los ultimos hunden el rendimiento. Es lo que hace que forzar sea rentable
- * un rato y ruinoso despues.
+ * El castigo por fatiga NO empieza en cero: empieza en la saturacion. Es la
+ * secuencia literal del GDD (6.5) — "genera fatiga, despues saturacion y
+ * finalmente burnout"— y hasta F6 estaba mal implementada: la calidad se
+ * degradaba desde el primer segundo de cansancio.
+ *
+ * Esa diferencia decidia la partida entera. Con el castigo empezando en cero,
+ * quien forzaba horas veia su calidad hundirse a los diez minutos y la
+ * estrategia equilibrada le adelantaba en el minuto cinco, cuando el GDD pide
+ * que el grind lidere hasta el 35 y pierda a partir del 60. Con el castigo
+ * empezando en la saturacion, acumular fatiga es gratis un rato —estas
+ * cansado, no roto— y luego cae en picado.
  */
 export function calcCalidad(vida: number, fatiga: number, multCalidad: number): number {
-  const { base, fatiguePenaltyExponent, lifeWeight, softCap } = TUNABLES.calidad
+  const { base, lifeWeight, softCap } = TUNABLES.calidad
   const lifeFactor = 1 - lifeWeight + lifeWeight * clamp01(vida)
-  const fatigueFactor = Math.pow(1 - clamp01(fatiga), fatiguePenaltyExponent)
-  const raw = base * lifeFactor * fatigueFactor * multCalidad
+  const raw = base * lifeFactor * castigoFatiga(fatiga) * multCalidad
   return applySoftCap(raw, softCap)
+}
+
+/**
+ * Cuanto multiplica la fatiga a la calidad. 1 mientras no haya saturacion.
+ *
+ * Por debajo del umbral de saturacion no cuesta nada: puedes acumular
+ * cansancio sin que se note en lo que haces. A partir de ahi cae con
+ * exponente mayor que 1, asi que los ultimos puntos hunden el rendimiento
+ * mucho mas que los primeros.
+ */
+export function castigoFatiga(fatiga: number): number {
+  const { saturationThreshold } = TUNABLES.fatiga
+  const f = clamp01(fatiga)
+  if (f <= saturationThreshold) return 1
+
+  const margen = 1 - saturationThreshold
+  const restante = (1 - f) / margen
+  return Math.pow(Math.max(0, restante), TUNABLES.calidad.fatiguePenaltyExponent)
 }
 
 /** Por encima del techo, cada punto adicional cuesta el doble. */
@@ -92,17 +117,21 @@ export function calcConversion(
 /**
  * Ingresos por segundo del flujo directo: publicidad y apoyos.
  *
- * La aportacion de la comunidad SATURA. Una comunidad diez veces mayor no
- * paga diez veces mas: cambia la proporcion de gente que apoya, se topan los
- * patrocinios y el canal deja de escalar linealmente. Sin esta saturacion, el
- * dinero tardio crecia tanto que el retiro se resolvia solo por acumulacion y
- * el catalogo —que es el motor economico que quiere el diseno— dejaba de
- * importar. El banco lo vio: coberturas de 23x cuando 1x ya es retirarse.
+ * Las DOS fuentes saturan. Ni una comunidad diez veces mayor paga diez veces
+ * mas —cambia la proporcion de gente que apoya y se topan los patrocinios—,
+ * ni un millon de visitas paga cien veces lo que diez mil.
+ *
+ * Sin saturar, el dinero tardio crecia tanto que el retiro se resolvia por
+ * pura acumulacion y el catalogo —que es el motor economico que quiere el
+ * diseno— dejaba de importar. El banco lo vio dos veces: coberturas de 23x
+ * cuando 1x ya es retirarse, y partidas que se acababan en el minuto 57.
  */
 export function calcIngresosDirectos(alcance: number, comunidad: number): number {
-  const { cpmPerAlcance, incomePerComunidad, incomeSaturationK } = TUNABLES.economia
+  const { cpmPerAlcance, incomePerComunidad, incomeSaturationK, alcanceSaturationK } =
+    TUNABLES.economia
   const comunidadEfectiva = comunidad / (1 + comunidad / incomeSaturationK)
-  return alcance * cpmPerAlcance + comunidadEfectiva * incomePerComunidad
+  const alcanceEfectivo = alcance / (1 + alcance / alcanceSaturationK)
+  return alcanceEfectivo * cpmPerAlcance + comunidadEfectiva * incomePerComunidad
 }
 
 /**

@@ -115,7 +115,9 @@ describe('burnout', () => {
       fatiga: TUNABLES.fatiga.burnoutThreshold - 0.01,
       allocation: { produccion: 1, comunidad: 0, vida: 0, descanso: 0 },
     }
-    s = avanzar(s, 400)
+    // Con el ritmo de fatiga calibrado en F6 hacen falta unos minutos de
+    // simulacion para cruzar el ultimo punto, no unos segundos.
+    s = avanzar(s, 3000)
     expect(s.descanso?.tipo).toBe('burnout')
   })
 
