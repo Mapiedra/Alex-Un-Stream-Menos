@@ -8,6 +8,7 @@ import {
 } from '../../content/narrative.ts'
 import { useGame } from '../../store.ts'
 import { fmt } from '../../format.ts'
+import { MuroFinales } from './MuroFinales.tsx'
 
 /**
  * La escena final.
@@ -84,6 +85,8 @@ export function Final() {
           <Dato etiqueta="Momentos grandes" valor={fmt(g.eventosExtraordinarios)} />
           <Dato etiqueta="Veces que paraste a la fuerza" valor={fmt(g.burnouts)} />
         </dl>
+
+        <MuroFinales propio={final.epilogo} />
 
         <button className="tarjeta__opcion" onClick={() => reset()}>
           Empezar otra vez

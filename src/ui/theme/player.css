@@ -1277,3 +1277,65 @@
   border-top: 1px solid var(--c-border);
   padding-top: var(--space-3);
 }
+
+/* ---------- Muro de finales ---------- */
+.muro {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--c-border);
+}
+
+.muro__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.muro__fila {
+  display: grid;
+  grid-template-columns: 1fr 100px 40px;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: 12px;
+  color: var(--c-textMuted);
+}
+
+/* El tuyo se marca, pero sin premio ni castigo: no es una clasificacion. */
+.muro__fila[data-tuyo="true"] {
+  color: var(--c-textBright);
+}
+
+.muro__marca {
+  color: var(--c-accent);
+  font-style: normal;
+}
+
+.muro__barra {
+  height: 8px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+}
+
+.muro__barra span {
+  display: block;
+  height: 100%;
+  background: var(--c-borderStrong);
+}
+
+.muro__fila[data-tuyo="true"] .muro__barra span {
+  background: var(--c-accent);
+}
+
+.muro__pct {
+  text-align: right;
+  font-size: 11px;
+}
+
+.muro__nota {
+  margin: 0;
+  font-size: 11px;
+  color: var(--c-textDim);
+}

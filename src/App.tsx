@@ -13,6 +13,8 @@ import { TarjetaVida } from './ui/panels/TarjetaVida.tsx'
 import { Retiro } from './ui/panels/Retiro.tsx'
 import { Final } from './ui/panels/Final.tsx'
 import { Opciones } from './ui/panels/Opciones.tsx'
+import { Analytics } from '@vercel/analytics/react'
+import { useTelemetria } from './telemetria/usar.ts'
 import { Sparkline } from './ui/components/Sparkline.tsx'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
@@ -40,6 +42,10 @@ export function App() {
   const publish = useGame((s) => s.publish)
   const catchClip = useGame((s) => s.catchClip)
   const avisoCarga = useGame((s) => s.avisoCarga)
+
+  // Telemetria anonima: en que minuto abandona la gente y como acaba. Sin
+  // credenciales configuradas no hace nada en absoluto.
+  useTelemetria()
 
   const costeVidaSemanal = houseLivingCost(g.houseStage)
   const ingresosSemanales = g.ingresosPorSegundo * TUNABLES.secondsPerWeek
@@ -146,6 +152,8 @@ export function App() {
       <TarjetaVida />
 
       <Final />
+
+      <Analytics />
     </div>
   )
 }

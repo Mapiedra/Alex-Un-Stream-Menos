@@ -1,7 +1,8 @@
 {
-  "name": "alexelcapo-la-maquina",
+  "name": "alex-un-stream-menos",
   "private": true,
   "version": "0.1.0",
+  "description": "Un juego incremental sobre crecer, crear comunidad y aprender a trabajar menos",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +14,7 @@
     "balance": "tsx tools/balance/run.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zustand": "^5.0.8"
