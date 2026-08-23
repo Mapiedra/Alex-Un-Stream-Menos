@@ -7,8 +7,11 @@
  *   avatar-canal.webp        el avatar del canal: fondo #0c0b22, rim light
  *                            cian #41caee, piel #d9c4b9
  *   intro-calle.png          la calle nocturna de la intro: neones y farolas
- *   twitch-directo-chat.png  el reproductor y el chat: cromo de interfaz
- *   twitch-webcam-juego.png  el acento morado #a970ff de la barra
+ *
+ * El cromo de interfaz (#18181b del chat, #a970ff de la barra, los diez
+ * colores de nick) salio de dos capturas del directo real que NO estan en el
+ * repositorio: contienen nombres y mensajes de espectadores concretos. Los
+ * valores extraidos si estan aqui, que es lo unico que hace falta.
  *
  * Tres bloques con tres funciones distintas:
  *   ESCENA   — la calle y el personaje (capa diegetica, pixel art)

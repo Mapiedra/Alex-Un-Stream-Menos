@@ -8,3 +8,8 @@ dist
 # Credenciales locales. La plantilla es .env.example
 .env
 .env.local
+
+# Referencias con datos de terceros. Las capturas del directo contienen
+# nombres y mensajes de espectadores reales: se conservan en local para poder
+# trabajar con ellas, pero NO se publican.
+docs/ref/privado/

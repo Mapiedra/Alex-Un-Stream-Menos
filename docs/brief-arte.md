@@ -1,4 +1,4 @@
-# Brief de arte — "La Máquina de Hacer Vídeos"
+# Brief de arte — "Alex: Un Stream Menos"
 
 Documento para encargar el pixel art. Contiene todo lo que un artista necesita para presupuestar sin tener que preguntar.
 
@@ -18,8 +18,7 @@ En `docs/ref/`:
 |---|---|
 | `avatar-canal.webp` | El personaje: silueta, gafas con brillo cian, paleta del rim light |
 | `intro-calle.png` | **La referencia principal.** Calle nocturna con lluvia, neones, farolas |
-| `twitch-directo-chat.png` | El encuadre real del reproductor y el chat |
-| `twitch-webcam-juego.png` | La webcam en esquina y su relación con la escena |
+| *(privadas)* | Dos capturas del directo real —el encuadre del reproductor con chat y la webcam en esquina— que **no están en el repositorio**: contienen nombres y mensajes de espectadores reales. Se pasan aparte al artista. |
 
 El estilo objetivo es exactamente el de `intro-calle.png`.
 
