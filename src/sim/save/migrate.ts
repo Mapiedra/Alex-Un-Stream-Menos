@@ -1,10 +1,12 @@
 import { createClipState } from '../clip.ts'
+import { createRng } from '../rng.ts'
 import { FORMATO_INICIAL } from '../../content/contentTypes.ts'
 import { crearHistorial } from '../historial.ts'
 import { allocationDelPlan, planAutomatico, type Semana } from '../semana.ts'
 import { NIVEL_POR_DEFECTO } from '../publicacion.ts'
 import { crearLectura } from '../lectura.ts'
 import { SCHEMA_VERSION, type Allocation, type GameState } from '../state.ts'
+import { TUNABLES } from '../tunables.ts'
 
 /**
  * Migraciones de partidas guardadas.
@@ -145,6 +147,28 @@ export const MIGRACIONES: Record<number, Migracion> = {
     ...s,
     lectura: crearLectura(),
     schemaVersion: 11,
+  }),
+
+  /**
+   * v11 -> v12: aparecen los patrocinios y la credibilidad.
+   *
+   * Una partida vieja se reanuda con la credibilidad intacta y el techo sin
+   * tocar: no habia marcas a las que decir que si, asi que no puede deber
+   * nada. Sin ofertas pendientes ni contratos en curso, y sin ninguna moda
+   * contada en su contra.
+   */
+  11: (s) => ({
+    ...s,
+    credibilidad: TUNABLES.patrocinios.credibilidad.inicial,
+    techoCredibilidad: 1,
+    rngMarcas: createRng(1),
+    ofertas: [],
+    contratos: [],
+    aceptadosPorCategoria: {},
+    resacas: [],
+    resacaPendiente: null,
+    ingresosPatrocinio: 0,
+    schemaVersion: 12,
   }),
 }
 

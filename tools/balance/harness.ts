@@ -1,5 +1,11 @@
 import { createInitialState } from '../../src/sim/state.ts'
-import { cobertura, cumpleRetiro, puedeRetirarse } from '../../src/sim/final.ts'
+import {
+  cobertura,
+  cumpleRetiro,
+  evaluarEpilogo,
+  puedeRetirarse,
+  type Epilogo,
+} from '../../src/sim/final.ts'
 import { publicar, step } from '../../src/sim/tick.ts'
 import { TUNABLES } from '../../src/sim/tunables.ts'
 
@@ -8,6 +14,7 @@ import { comprar, replanificar } from '../../src/sim/shop.ts'
 import { resolver } from '../../src/sim/lifeEvents.ts'
 import { irseDeVacaciones, puedeIrseDeVacaciones } from '../../src/sim/descanso.ts'
 import { prepararEvento } from '../../src/sim/bigEvents.ts'
+import { aceptar, definicion, rechazar } from '../../src/sim/patrocinios.ts'
 
 export interface RunResult {
   botId: string
@@ -23,6 +30,14 @@ export interface RunResult {
   eventos: number
   ahorrosFinal: number
   compras: number
+  /** Contratos de marca firmados en toda la partida. */
+  contratos: number
+  credibilidadFinal: number
+  techoFinal: number
+  /** Epilogo que le tocaria si se retirase ahora. */
+  epilogoFinal: Epilogo
+  /** Minuto en que sus ahorros pasan de mil euros. Mide el dinero RAPIDO. */
+  milEurosEnMinuto: number | null
   /** Cumple las ocho condiciones del retiro al terminar? */
   condicionesFinales: boolean
   /** Coste de vida cubierto por rentas, al final. 1 = justo cubierto. */
@@ -88,6 +103,8 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
   let proximaMuestra = 0
 
   let compras = 0
+  let contratos = 0
+  let milEurosEnMinuto: number | null = null
 
   for (let i = 0; i < maxTicks; i++) {
     // Las tarjetas de vida detienen la simulacion hasta que alguien conteste.
@@ -98,6 +115,30 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
 
     // La entrada de ciclo detiene igual: el bot la da por leida y sigue.
     if (s.avisoCiclo !== null) s = { ...s, avisoCiclo: null }
+
+    // El titular de una moda que estalla detiene por la misma razon.
+    if (s.resacaPendiente !== null) s = { ...s, resacaPendiente: null }
+
+    /**
+     * Las marcas.
+     *
+     * Un bot sin politica de patrocinio no firma nada, que es la politica por
+     * defecto correcta: el GDD dice que ningun sistema puede ser requisito, y
+     * la mayoria de los bots existen para medir otras cosas. Lo que si hace
+     * todo bot es VACIAR la bandeja, porque una oferta ignorada bloquea sitio
+     * y falsearia el ritmo del goteo.
+     */
+    for (const oferta of s.ofertas) {
+      const def = definicion(oferta.id)
+      if (!def) continue
+      if (bot.patrocinio?.(s, def)) {
+        const antes = s
+        s = aceptar(s, oferta.id)
+        if (s !== antes) contratos += 1
+      } else {
+        s = rechazar(s, oferta.id)
+      }
+    }
 
     // Comprar primero: en los ciclos 1-2 la compra es lo que mueve el reparto.
     if (!bot.compra || bot.compra(s)) {
@@ -150,6 +191,12 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
     if (retiroEnMinuto === null && puedeRetirarse(s)) {
       retiroEnMinuto = minuto
     }
+
+    // El dinero RAPIDO: vender tiene que llegar antes al colchon o la
+    // decision es falsa. Es la aserción 2 del banco.
+    if (milEurosEnMinuto === null && s.ahorros >= 1000) {
+      milEurosEnMinuto = minuto
+    }
   }
 
   return {
@@ -165,6 +212,11 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
     eventos: s.eventosExtraordinarios,
     ahorrosFinal: s.ahorros,
     compras,
+    contratos,
+    credibilidadFinal: s.credibilidad,
+    techoFinal: s.techoCredibilidad,
+    epilogoFinal: evaluarEpilogo(s),
+    milEurosEnMinuto,
     coberturaFinal: calcCobertura(s),
     condicionesFinales: cumpleRetiro(s),
     muestras,

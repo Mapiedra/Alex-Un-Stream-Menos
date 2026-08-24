@@ -126,12 +126,49 @@ export function calcConversion(
  * diseno— dejaba de importar. El banco lo vio dos veces: coberturas de 23x
  * cuando 1x ya es retirarse, y partidas que se acababan en el minuto 57.
  */
-export function calcIngresosDirectos(alcance: number, comunidad: number): number {
+export function calcIngresosDirectos(
+  alcance: number,
+  comunidad: number,
+  credibilidad = 1,
+): number {
   const { cpmPerAlcance, incomePerComunidad, incomeSaturationK, alcanceSaturationK } =
     TUNABLES.economia
   const comunidadEfectiva = comunidad / (1 + comunidad / incomeSaturationK)
   const alcanceEfectivo = alcance / (1 + alcance / alcanceSaturationK)
-  return alcanceEfectivo * cpmPerAlcance + comunidadEfectiva * incomePerComunidad
+  // La credibilidad toca los APOYOS y no la publicidad. Al anunciante no le
+  // importa lo que hayas firmado; a quien te da su dinero todos los meses, si.
+  return (
+    alcanceEfectivo * cpmPerAlcance +
+    comunidadEfectiva * incomePerComunidad * factorApoyos(credibilidad)
+  )
+}
+
+/**
+ * Cuanto multiplica la credibilidad a la AFINIDAD.
+ *
+ * A la afinidad y no al alcance, y es toda la idea del sistema: a quien te
+ * descubre hoy le da igual el patrocinio que llevas encima. Lo que cambia es
+ * cuanta de esa gente vuelve manana.
+ *
+ * Con suelo, por la misma razon que lo tiene el escudo del alcance: sin el,
+ * venderse llevaria la conversion a cero, la comunidad se hundiria, y de ahi
+ * no se sale. Este juego no tiene derrota, asi que ningun sistema puede tener
+ * un pozo.
+ *
+ * Con la credibilidad intacta vale EXACTAMENTE 1, nunca mas. La credibilidad
+ * no es un bonus que se gana: es algo con lo que se empieza y que solo se
+ * puede gastar. Si valiese mas de 1 en su maximo, todo el balance calibrado en
+ * F6 se movia de sitio el dia que se anadio este sistema.
+ */
+export function factorAfinidad(credibilidad: number): number {
+  const { sueloAfinidad } = TUNABLES.patrocinios.credibilidad
+  return sueloAfinidad + (1 - sueloAfinidad) * clamp01(credibilidad)
+}
+
+/** Cuanto multiplica a los apoyos de la comunidad. Los anuncios no se enteran. */
+export function factorApoyos(credibilidad: number): number {
+  const { sueloApoyos } = TUNABLES.patrocinios.credibilidad
+  return sueloApoyos + (1 - sueloApoyos) * clamp01(credibilidad)
 }
 
 /**

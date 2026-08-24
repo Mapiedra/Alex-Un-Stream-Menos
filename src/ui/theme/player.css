@@ -1939,3 +1939,158 @@
   border-left: 1px solid var(--c-border);
   padding-left: var(--space-3);
 }
+
+/* ===== MARCAS — la bandeja de los patrocinios ==========================
+   Es la unica pantalla que existe para decir que no, asi que el boton de
+   rechazar no se esconde: pesa lo mismo que el de firmar. */
+.marcas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.marcas__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.marcas__credibilidad {
+  color: var(--c-credibilidad);
+  white-space: nowrap;
+}
+
+.marcas__techo,
+.marcas__pago {
+  color: var(--c-textMuted);
+}
+
+.marcas__seccion {
+  margin: var(--space-2) 0 0;
+  font-size: var(--px-8);
+  color: var(--c-textMuted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.marcas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.marcas__oferta,
+.marcas__contrato {
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-credibilidad);
+  background: var(--c-bgPanel);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.marcas__contrato {
+  border-left-color: var(--c-ingresos);
+}
+
+/* Una oferta a punto de caducar avisa por el borde, no por un mensaje: hay
+   demasiadas como para escribir una linea sobre cada una. */
+.marcas__oferta[data-caduca="true"] {
+  border-left-color: var(--c-fatiga);
+}
+
+.marcas__fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.marcas__marca {
+  color: var(--c-textBright);
+  font-weight: 600;
+}
+
+.marcas__meta {
+  color: var(--c-ingresos);
+  white-space: nowrap;
+}
+
+.marcas__moda {
+  color: var(--c-hype);
+}
+
+.marcas__titulo {
+  margin: 0;
+  font-size: var(--px-9);
+  color: var(--c-text);
+}
+
+.marcas__texto,
+.marcas__nota {
+  margin: 0;
+  color: var(--c-textMuted);
+  line-height: 1.5;
+}
+
+.marcas__coste {
+  margin: 0;
+  color: var(--c-textDim);
+}
+
+.marcas__acciones {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.marcas__no {
+  background: none;
+  border: 1px solid var(--c-border);
+  color: var(--c-textMuted);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  font: inherit;
+}
+
+.marcas__no:hover {
+  border-color: var(--c-borderStrong);
+  color: var(--c-text);
+}
+
+.marcas__pie {
+  margin: var(--space-2) 0 0;
+  color: var(--c-textDim);
+  line-height: 1.5;
+}
+
+/* La tarjeta de una moda que estalla. Sin opciones: ya elegiste. */
+.tarjeta--resaca {
+  border-left: 3px solid var(--c-fatiga);
+}
+
+/* La ola de la epoca. Se ve venir a proposito: la decision no es "firmo o no",
+   es "firmo ahora o espero". */
+.marcas__moda-banner {
+  border: 1px solid var(--c-hype);
+  background: var(--c-bgPanel);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.marcas__moda-banner[data-pico="true"] {
+  border-color: var(--c-border);
+}
+
+/* Un formato que presta un contrato, no uno que hayas desbloqueado tu. */
+.formato__prestado {
+  color: var(--c-credibilidad);
+}

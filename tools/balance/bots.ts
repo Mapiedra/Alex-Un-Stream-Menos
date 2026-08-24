@@ -2,6 +2,7 @@ import { UPGRADES, type Categoria } from '../../src/content/upgrades.ts'
 import { bolsilloDe, disponibilidad } from '../../src/sim/allocation.ts'
 import { cobertura } from '../../src/sim/final.ts'
 import type { Allocation, GameState } from '../../src/sim/state.ts'
+import type { OfertaPatrocinio } from '../../src/content/patrocinios.ts'
 
 /**
  * Fase de libertad: el momento en que las cuentas ya salen.
@@ -42,6 +43,15 @@ export interface Bot {
   vacaciones?: (s: GameState) => boolean
   /** Invierte en preparar la conferencia cuando la anuncian? */
   prepara?: boolean
+  /**
+   * Firma esta oferta de marca? Si se omite, no firma NUNCA.
+   *
+   * El defecto no es neutral por casualidad: los ocho bots que ya existian
+   * miden otras cosas y tienen que seguir midiendo lo mismo que antes de que
+   * existieran los patrocinios. Si el defecto fuera "firma", el banco entero
+   * cambiaria de significado de golpe.
+   */
+  patrocinio?: (s: GameState, oferta: OfertaPatrocinio) => boolean
   publish: (s: GameState) => boolean
 }
 
@@ -67,6 +77,21 @@ export function siguienteCompra(s: GameState, prioridad: Categoria[]): string | 
 }
 
 const TODO: Categoria[] = ['setup', 'flujo', 'rutina', 'formato', 'casa']
+
+/**
+ * El reparto de la politica equilibrada, que es la referencia del banco.
+ *
+ * Extraido para que los bots del sistema de marcas puedan clonarlo literal: si
+ * cada uno llevase su propia copia, un retoque en la referencia dejaria de
+ * aplicarse a los que la usan de control y las comparaciones dejarian de medir
+ * lo que dicen medir.
+ */
+const repartoEquilibrado = (s: GameState): Allocation =>
+  enLibertad(s)
+    ? LIBRE
+    : s.fatiga > 0.55
+      ? { produccion: 0.25, comunidad: 0.2, vida: 0.25, descanso: 0.3 }
+      : { produccion: 0.5, comunidad: 0.25, vida: 0.15, descanso: 0.1 }
 
 export const BOTS: Bot[] = [
   {
@@ -155,6 +180,52 @@ export const BOTS: Bot[] = [
     prioridad: TODO,
     prepara: true,
     vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
+    publish: (s) => cada(s, 10),
+  },
+  /**
+   * Los tres bots del sistema de marcas. Clonan al equilibrado a proposito:
+   * lo unico que cambia entre ellos es a que le dicen que si, asi que la
+   * diferencia que mida el banco es la del sistema y no la de otra cosa.
+   */
+  {
+    id: 'vendido',
+    descripcion: 'Como el equilibrado, pero firma absolutamente todo.',
+    allocation: repartoEquilibrado,
+    prioridad: TODO,
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
+    patrocinio: () => true,
+    publish: (s) => cada(s, 10),
+  },
+  {
+    id: 'integro',
+    descripcion: 'Como el equilibrado y no firma nada. El control del sistema.',
+    allocation: repartoEquilibrado,
+    prioridad: TODO,
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
+    publish: (s) => cada(s, 10),
+  },
+  {
+    id: 'selectivo',
+    descripcion: 'Firma marcas sin moda y claves de indies. Nunca una moda.',
+    allocation: repartoEquilibrado,
+    prioridad: TODO,
+    vacaciones: (s) => s.vacacionesCompletadas === 0 && s.week > 30,
+    /**
+     * Ni cripto, ni cajas, ni apuestas: nada que vaya a estallar.
+     *
+     * Y ademas SOLO con la cara limpia. Es la diferencia entre "acepto lo que
+     * no es toxico" y "acepto con criterio": firmar sin parar marcas tibias
+     * deja la credibilidad tan baja como firmar basura de vez en cuando, y una
+     * politica que no mira eso no esta siendo selectiva, solo esta siendo
+     * cobarde. Firma, se recupera, vuelve a firmar.
+     */
+    patrocinio: (s, o) => {
+      if (s.credibilidad < 0.85) return false
+      if (o.categoria === 'cripto' || o.categoria === 'cajas' || o.categoria === 'apuestas') {
+        return false
+      }
+      return o.categoria === 'editora' ? o.costeCredibilidad <= 0 : true
+    },
     publish: (s) => cada(s, 10),
   },
   {

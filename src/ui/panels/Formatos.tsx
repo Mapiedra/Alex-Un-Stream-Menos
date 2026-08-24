@@ -1,4 +1,9 @@
-import { FORMATOS_ELEGIBLES, type ContentType } from '../../content/contentTypes.ts'
+import {
+  CONTENT_POR_ID,
+  FORMATOS_ELEGIBLES,
+  type ContentType,
+} from '../../content/contentTypes.ts'
+import { formatosDeContrato } from '../../sim/patrocinios.ts'
 import { useGame } from '../../store.ts'
 
 /**
@@ -13,15 +18,32 @@ import { useGame } from '../../store.ts'
 export function Formatos() {
   const activo = useGame((s) => s.game.formato)
   const owned = useGame((s) => s.game.owned)
+  const contratos = useGame((s) => s.game.contratos)
   const cambiar = useGame((s) => s.setFormato)
+
+  /**
+   * Los formatos elegibles, mas los que presta un contrato en curso.
+   *
+   * Una clave de prensa no se compra ni se desbloquea: te la dan, la juegas
+   * mientras dura el acuerdo y despues desaparece de la lista. Por eso se
+   * anaden aqui y no en FORMATOS_ELEGIBLES, que es la lista de lo que el
+   * jugador puede elegir por su cuenta.
+   */
+  const prestados = formatosDeContrato(contratos)
+    .map((id) => CONTENT_POR_ID.get(id))
+    .filter((f): f is ContentType => f !== undefined)
+  const lista = [...FORMATOS_ELEGIBLES, ...prestados]
 
   return (
     <section className="formatos">
       <h2 className="formatos__titulo">Que emites</h2>
 
       <ul className="formatos__lista">
-        {FORMATOS_ELEGIBLES.map((f) => {
-          const bloqueado = f.requiere !== undefined && !owned[f.requiere]
+        {lista.map((f) => {
+          // Un formato prestado nunca esta bloqueado: si esta en la lista es
+          // porque hay un contrato firmado que lo concede ahora mismo.
+          const prestado = f.requiere === '@evento'
+          const bloqueado = !prestado && f.requiere !== undefined && !owned[f.requiere]
           return (
             <li key={f.id}>
               <button
@@ -31,7 +53,10 @@ export function Formatos() {
                 onClick={() => cambiar(f.id)}
                 title={bloqueado ? 'Se desbloquea comprando el formato en la tienda' : f.descripcion}
               >
-                <span className="formato__nombre">{f.nombre}</span>
+                <span className="formato__nombre">
+                  {f.nombre}
+                  {prestado && <span className="formato__prestado"> · clave</span>}
+                </span>
                 <span className="formato__desc">
                   {bloqueado ? 'Aun no lo has desbloqueado' : f.descripcion}
                 </span>

@@ -74,6 +74,47 @@ describe('migraciones', () => {
     expect(() => step(r.state, TUNABLES.tickMs)).not.toThrow()
   })
 
+  /**
+   * El caso real de quien ya estaba jugando cuando llegaron las marcas.
+   *
+   * Se reanuda con la cara limpia y sin deber nada: no habia marcas a las que
+   * decir que si, asi que no puede haberse vendido. Y sin ninguna moda contada
+   * en su contra, que seria cobrarle algo que no hizo.
+   */
+  it('un guardado de la v11 se reanuda sin deberle nada a nadie', () => {
+    const v11: Record<string, unknown> = {
+      ...createInitialState(3),
+      schemaVersion: 11,
+    }
+    for (const campo of [
+      'credibilidad',
+      'techoCredibilidad',
+      'rngMarcas',
+      'ofertas',
+      'contratos',
+      'aceptadosPorCategoria',
+      'resacas',
+      'resacaPendiente',
+      'ingresosPatrocinio',
+    ]) {
+      delete v11[campo]
+    }
+
+    const r = deserializar(JSON.stringify(v11))
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+
+    expect(r.migrada).toBe(true)
+    expect(r.state.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(r.state.credibilidad).toBe(1)
+    expect(r.state.techoCredibilidad).toBe(1)
+    expect(r.state.ofertas).toEqual([])
+    expect(r.state.contratos).toEqual([])
+    expect(r.state.resacas).toEqual([])
+    expect(r.state.resacaPendiente).toBeNull()
+    expect(() => step(r.state, TUNABLES.tickMs)).not.toThrow()
+  })
+
   it('migrar es idempotente sobre una partida ya actual', () => {
     const s = JSON.parse(serializar(createInitialState()))
     expect(migrar(s)).toEqual(s)

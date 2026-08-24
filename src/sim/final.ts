@@ -15,7 +15,7 @@ import { TUNABLES } from './tunables.ts'
  * sostenerlo TRABAJANDO POCO. De nada sirve llegar al numero a base de horas.
  */
 
-export type Epilogo = 'comodo' | 'justo' | 'rueda'
+export type Epilogo = 'comodo' | 'justo' | 'vendido' | 'rueda'
 
 export interface FinalPartida {
   epilogo: Epilogo
@@ -110,12 +110,38 @@ export function puedeRetirarse(state: GameState): boolean {
  * Que epilogo toca.
  *
  * No hay derrota. Lo que cambia es con cuanto margen llegas: si te sobra, si
- * te da justo, o si decides parar sin haber llegado — que tampoco es perder,
- * es el final por defecto y se cuenta con respeto.
+ * te da justo, si llegaste vendiendote, o si decides parar sin haber llegado
+ * — que tampoco es perder, es el final por defecto y se cuenta con respeto.
+ *
+ * `vendido` se comprueba ANTES que la cobertura, y el orden es la frase entera
+ * del juego: haberte vendido tapa incluso un retiro holgado. El final bueno de
+ * este juego no es el dinero, es la gente, y si llegaste al numero a base de
+ * firmar todo lo que te pusieron delante, entonces llegaste al numero y a otra
+ * cosa distinta.
  */
 export function evaluarEpilogo(state: GameState): Epilogo {
   if (!puedeRetirarse(state)) return 'rueda'
+  if (teVendiste(state)) return 'vendido'
   return cobertura(state) >= TUNABLES.final.coberturaComoda ? 'comodo' : 'justo'
+}
+
+/**
+ * Te vendiste?
+ *
+ * Dos formas de que la respuesta sea si, y hacen falta las dos porque miden
+ * cosas distintas:
+ *
+ *   la credibilidad de HOY   sigues firmando al llegar al final
+ *   el techo                 la cicatriz permanente de las modas que firmaste
+ *
+ * Solo con la primera, quien se vendio a lo bestia durante veinte semanas y
+ * despues paso un ano recuperandose saldria limpio, y no es verdad: los
+ * videos siguen ahi. Solo con la segunda, quien firma marcas sin moda hasta el
+ * ultimo dia saldria limpio tambien.
+ */
+export function teVendiste(state: GameState): boolean {
+  const { umbralVendido, umbralTechoVendido } = TUNABLES.patrocinios
+  return state.credibilidad < umbralVendido || state.techoCredibilidad < umbralTechoVendido
 }
 
 /** Cierra la partida con el epilogo que corresponda. */

@@ -33,6 +33,9 @@ const sinDescanso = correr('sin-descanso')
 const vacacionero = correr('vacacionero')
 const derivadoRun = correr('derivado')
 const aprovechado = correr('aprovechado')
+const vendido = correr('vendido')
+const integro = correr('integro')
+const selectivo = correr('selectivo')
 
 describe('ninguna estrategia domina la partida', () => {
   it('el equilibrado se retira antes que cualquier estrategia de un solo eje', () => {
@@ -243,5 +246,109 @@ describe('el crecimiento tiene techo', () => {
     for (const r of [equilibrado, calidad]) {
       expect(r.calidadFinal).toBeLessThan(10)
     }
+  })
+})
+
+/**
+ * LAS MARCAS — las cuatro reglas del sistema de patrocinios.
+ *
+ * Son las mismas cuatro preguntas que hay que hacerle a cualquier sistema que
+ * ofrezca dinero rapido: se puede ignorar, funciona de verdad, cuesta algo, y
+ * hay una forma intermedia de jugarlo.
+ *
+ * Los tres bots clonan al equilibrado y solo se diferencian en a que le dicen
+ * que si, para que lo que mida el banco sea la decision y no otra cosa.
+ */
+describe('los patrocinios nunca son requisito', () => {
+  /**
+   * La regla que hereda de los eventos extraordinarios del GDD: potentes pero
+   * NUNCA obligatorios. Una partida que no firme ni un contrato tiene que
+   * llegar exactamente igual de lejos.
+   *
+   * Se comprueba con igualdad estricta y no con una banda porque el sistema
+   * tiene su propia corriente de PRNG: quien no firma nada juega una partida
+   * identica bit a bit a la de antes de que existieran las marcas. Si esto
+   * falla, alguien ha vuelto a meter el sorteo de ofertas en el generador
+   * general y ha desplazado en silencio todo lo que mide el banco.
+   */
+  it('quien no firma nada juega exactamente la misma partida', () => {
+    expect(integro.retiroEnMinuto).toBe(equilibrado.retiroEnMinuto)
+    expect(integro.comunidadFinal).toBeCloseTo(equilibrado.comunidadFinal, 6)
+    expect(integro.contratos).toBe(0)
+  })
+
+  it('se puede llegar al mejor final sin firmar nada', () => {
+    expect(integro.retiroEnMinuto).not.toBeNull()
+    expect(integro.epilogoFinal).toBe('comodo')
+  })
+})
+
+describe('vender funciona a corto plazo', () => {
+  /**
+   * Si firmar no diese dinero de verdad y pronto, el sistema seria un boton
+   * que nunca se pulsa y sobraria entero. La tentacion tiene que ser real o
+   * no hay decision que tomar.
+   */
+  it('el dinero llega mucho antes vendiendose', () => {
+    expect(vendido.milEurosEnMinuto).not.toBeNull()
+    expect(equilibrado.milEurosEnMinuto).not.toBeNull()
+    expect(vendido.milEurosEnMinuto ?? 0).toBeLessThan(
+      (equilibrado.milEurosEnMinuto ?? 0) * 0.85,
+    )
+  })
+
+  it('y se nota en la comunidad, que crece menos', () => {
+    expect(vendido.comunidadFinal).toBeLessThan(integro.comunidadFinal)
+  })
+})
+
+describe('vender cuesta el buen final', () => {
+  /**
+   * LA regla del sistema, y la que da sentido a las otras tres.
+   *
+   * El final bueno de este juego es una comunidad fiel que te mantiene sin
+   * trabajar. Quien llega al numero firmando todo lo que le ponen delante
+   * llega al numero y a otra cosa distinta, y el juego se lo dice sin
+   * moralina: le da su epilogo.
+   */
+  it('quien firma todo no saca buen final por mucho que se retire', () => {
+    expect(vendido.retiroEnMinuto).not.toBeNull()
+    expect(vendido.epilogoFinal).toBe('vendido')
+  })
+
+  it('la credibilidad y el techo quedan claramente por debajo del umbral', () => {
+    // Con margen: la clasificacion no puede decidirse por una centesima.
+    expect(vendido.credibilidadFinal).toBeLessThan(0.55)
+    expect(vendido.techoFinal).toBeLessThan(0.85)
+  })
+})
+
+describe('firmar con criterio es una estrategia, no una trampa', () => {
+  /**
+   * La cuarta regla. Si la unica jugada correcta fuese no abrir nunca la
+   * pantalla de marcas, el sistema seria una pestana que castiga por mirarla.
+   * Hay un termino medio —firmar cuando tienes la cara limpia, nunca una
+   * moda— y tiene que salir a cuenta.
+   */
+  it('el selectivo no queda por detras del integro', () => {
+    expect(selectivo.retiroEnMinuto).not.toBeNull()
+    expect(selectivo.retiroEnMinuto ?? Infinity).toBeLessThanOrEqual(
+      integro.retiroEnMinuto ?? Infinity,
+    )
+  })
+
+  it('y llega igualmente al mejor final', () => {
+    expect(selectivo.epilogoFinal).toBe('comodo')
+    expect(selectivo.contratos).toBeGreaterThan(0)
+  })
+
+  /**
+   * Pero no puede ser tan bueno que convierta al integro en un error. La
+   * ventaja de firmar con criterio es de tempo, no de resultado.
+   */
+  it('pero no arrasa: la ventaja es de tempo, no de otra liga', () => {
+    expect(selectivo.retiroEnMinuto ?? 0).toBeGreaterThan(
+      (integro.retiroEnMinuto ?? 0) * 0.8,
+    )
   })
 })

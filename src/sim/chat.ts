@@ -6,8 +6,11 @@ import {
   CHAT_BUENA_RACHA,
   CHAT_CANSANCIO,
   CHAT_COMUNIDAD,
+  CHAT_CREDIBILIDAD,
   CHAT_EMOTES,
   CHAT_GENERICAS,
+  CHAT_INTEGRIDAD,
+  CHAT_PATROCINIO,
   CHAT_PUBLICACION,
   NICKS,
 } from '../content/chatLines.ts'
@@ -52,6 +55,10 @@ export interface ChatInput {
   fatiga: number
   /** Sube al publicar; hace que el chat reaccione a lo que acaba de pasar. */
   hype: number
+  /** Lo que la gente cree que haces por dinero. */
+  credibilidad: number
+  /** Hay un contrato con una marca corriendo ahora mismo. */
+  patrocinado: boolean
 }
 
 /** Mensajes por segundo. Satura: un chat de 10.000 no se lee mas rapido. */
@@ -85,6 +92,38 @@ function elegirTexto(rng: RngState, input: ChatInput): { text: string; rng: RngS
   const roll = r.value
   let cursor = r.rng
 
+  /**
+   * El patrocinio va PRIMERO, por delante incluso del cansancio.
+   *
+   * Cuando hay una marca en pantalla es de lo unico de lo que habla un chat, y
+   * ese es justo el punto: el jugador tiene que ver en el chat lo que le esta
+   * costando el dinero, no enterarse por una cifra que baja despacio en otra
+   * pestana.
+   */
+  if (input.patrocinado && roll < 0.22) {
+    return remap(pick(cursor, CHAT_PATROCINIO))
+  }
+  /**
+   * El aviso llega ANTES de que la cifra duela, igual que con la fatiga.
+   *
+   * Ojo a la banda: todas estas ramas comparten la MISMA tirada, asi que una
+   * ventana mas ancha arriba tapa entera a la de abajo. Con el patrocinio en
+   * 0.30 y esto en 0.28, el chat no podia quejarse jamas mientras hubiera un
+   * contrato encima — que es justo cuando tiene que poder hacerlo.
+   */
+  if (input.credibilidad < UMBRAL_QUEJA && roll < 0.3) {
+    return remap(pick(cursor, CHAT_CREDIBILIDAD))
+  }
+  // Rechazar tiene que SENTIRSE. Un canal grande, sin marcas encima y con la
+  // credibilidad intacta es un canal del que la gente presume.
+  if (
+    !input.patrocinado &&
+    input.credibilidad >= UMBRAL_ORGULLO &&
+    input.comunidad > 5000 &&
+    roll < 0.12
+  ) {
+    return remap(pick(cursor, CHAT_INTEGRIDAD))
+  }
   if (input.fatiga > TUNABLES.fatiga.warningThreshold && roll < 0.25) {
     return remap(pick(cursor, CHAT_CANSANCIO))
   }
@@ -107,6 +146,12 @@ function elegirTexto(rng: RngState, input: ChatInput): { text: string; rng: RngS
   }
   return remap(pick(cursor, CHAT_GENERICAS))
 }
+
+/** Por debajo de aqui el chat empieza a decirlo en voz alta. */
+const UMBRAL_QUEJA = 0.75
+
+/** Por encima de aqui, y sin marcas encima, el chat lo agradece. */
+const UMBRAL_ORGULLO = 0.95
 
 function remap(p: { value: string; rng: RngState }): { text: string; rng: RngState } {
   return { text: p.value, rng: p.rng }

@@ -9,12 +9,14 @@ import { Tienda } from './ui/panels/Tienda.tsx'
 import { Formatos } from './ui/panels/Formatos.tsx'
 import { Carrera } from './ui/panels/Carrera.tsx'
 import { Momentos } from './ui/panels/Momentos.tsx'
+import { Marcas } from './ui/panels/Marcas.tsx'
 import { Planificador } from './ui/panels/Planificador.tsx'
 import { Lectura } from './ui/panels/Lectura.tsx'
 import { TarjetaVida } from './ui/panels/TarjetaVida.tsx'
 import { Retiro } from './ui/panels/Retiro.tsx'
 import { Final } from './ui/panels/Final.tsx'
 import { Ciclo } from './ui/panels/Ciclo.tsx'
+import { Resaca } from './ui/panels/Resaca.tsx'
 import { Ayuda } from './ui/panels/Ayuda.tsx'
 import { Opciones } from './ui/panels/Opciones.tsx'
 import { Menu } from './ui/menu/Menu.tsx'
@@ -180,6 +182,10 @@ function Partida() {
         avisos={{
           semana: planificando,
           carrera: puedeRetirarse(g),
+          // El punto rojo solo salta con lo que se pierde si no lo miras: una
+          // oferta que caduca esta semana. Con ofertas constantes, un aviso
+          // siempre encendido no significaria nada.
+          marcas: g.ofertas.some((o) => o.caducaSemana - g.week <= 1),
           vida: Boolean(g.evento && !g.evento.preparado),
         }}
       />
@@ -204,6 +210,7 @@ function Partida() {
               <Stat label="Fatiga" valor={pct(g.fatiga)} token="fatiga" hint="Por encima del 60% la calidad sufre; del 85%, burnout. Cuesta caro, pero nunca termina la partida." />
               <Stat label="Hype" valor={`x${(1 + g.hype).toFixed(2)}`} token="hype" hint="Multiplicador temporal. Decae rapido." />
               <Stat label="Ideas" valor={fmt(g.ideas, 1)} token="ideas" hint="Materia prima de los formatos nuevos. La genera la vida personal y terminar libros." />
+              <Stat label="Credibilidad" valor={pct(g.credibilidad)} token="credibilidad" hint="Lo que la gente cree que haces por dinero. No toca el alcance ni la publicidad: cambia cuanta gente se queda y cuanta te apoya. La gastan los patrocinios; se recupera con franjas de comunidad." />
               <Stat label="Material" valor={g.material.toFixed(1)} token="ingresos" hint="Videos montados y listos para subir. Salen de las franjas de editar; publicar y montarte el flujo los gastan." />
               <Stat label="Ahorros" valor={eur(g.ahorros)} token="ingresos" hint="Lo que NO gastaste en mejoras. Es tu via de retiro." />
               <Stat label="Ingresos" valor={`${eur(ingresosSemanales, 1)}/sem`} token="ingresos" hint="Alcance + comunidad + cola larga del catalogo." />
@@ -215,6 +222,8 @@ function Partida() {
             <Formatos />
           </>
         )}
+
+        {pantalla === 'marcas' && <Marcas />}
 
         {pantalla === 'tienda' && <Tienda />}
 
@@ -252,6 +261,8 @@ function Partida() {
       <TarjetaVida />
 
       <Ciclo />
+
+      <Resaca />
 
       <Final />
 

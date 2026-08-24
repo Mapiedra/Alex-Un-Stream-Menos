@@ -5,6 +5,9 @@ Ideas fuera del alcance de la fase actual. Aqui van para no contaminar el sprint
 ## Seccion 14 del GDD (expansion posterior)
 
 - Mas formatos de juegos y eventos aleatorios.
+- ~~Patrocinadores.~~ Hecho en F9: ofertas constantes, credibilidad como recurso,
+  tres modas colocadas en el tiempo con su resaca, claves de prensa y el cuarto
+  epilogo. Lo que queda pendiente esta abajo.
 - Sistema de noticias y tendencias.
 - ~~Coleccion de libros, peliculas y series con sinergias.~~ Hecho en F7: los
   libros existen, se leen con horas del dia a dia y la coleccion da sinergias
@@ -79,3 +82,30 @@ Falta un selector en la tienda o en la barra de controles.
   un reproductor real. No se usa ningun logotipo ni marca denominativa, pero
   merece una revision antes de publicar.
 - **Validacion con el creador.** El proyecto usa su nombre y sus referencias.
+
+### La pantalla de Marcas no se ha visto renderizada — F9
+Igual que la rejilla de la semana: las tarjetas de oferta, el banner de la moda
+y el modal de la resaca se han verificado por DOM —textos, clases, atributos,
+que el reloj se congela y se reanuda— pero nadie ha visto la pantalla dibujada.
+El navegador no compone frames sin ventana visible, asi que la captura sigue sin
+poder hacerse desde aqui.
+
+Lo que mas depende de verse: si el punto rojo de la pestana molesta a la larga,
+si dos ofertas seguidas se leen bien de un vistazo, y si el modal de la resaca
+tiene el peso que deberia tener.
+
+### El multiplicador de moda no avisa antes de empezar — F9
+La ola se ve en cuanto empieza a calentarse, pero no hay ningun aviso de que
+viene. Un jugador que abre la pestana en la semana 25 ve un x4 y no sabe si es
+el principio o el final. El banner lo dice con palabras; convendria una barra.
+
+### El texto del banner dice "cada vez mas" tambien en el pico exacto — F9
+`subiendo` es `semana <= picoSemana`, asi que la semana del pico se anuncia como
+si todavia subiera. Es una semana de setenta y cinco y no rompe nada, pero esta
+mal dicho.
+
+### La resaca puede pillarte con el contrato a medias — F9
+Si firmas una moda dos semanas antes de que estalle, el contrato se queda
+corriendo despues del estallido: sigues cobrando de una marca que acaba de
+saltar por los aires. Puede que sea lo correcto —los contratos no se rompen
+solos— pero no se ha decidido a proposito, ha salido asi.

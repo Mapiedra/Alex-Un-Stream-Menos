@@ -12,7 +12,9 @@ Empiezas con un PC en una habitación y la pregunta obvia: cómo conseguir más 
 
 **El tiempo es un presupuesto, no un río.** Una semana son 21 franjas —siete días por mañana, tarde y noche— y cada una se gasta en una cosa: emitir, editar, comunidad, leer, vida o dormir. Repartes, vives la semana con el reproductor en marcha, y al acabarse la partida se para y vuelves a repartir. Decidir es una pausa.
 
-**Ganar no es facturar más. Ganar es poder parar.** Que lo que ya publicaste y lo que tienes ahorrado te cubran sin producir nada nuevo — y sostenerlo trabajando pocas horas, porque llegar a la cifra a base de horas no es retirarse de nada.
+**Las marcas escriben, y no paran de escribir.** Cripto en la semana 12, cajas de botín en la 28, casas de apuestas en la 45: cada moda paga cifras absurdas mientras dura y deja una lista cuando estalla. Firmar da dinero hoy y gasta **credibilidad**, que no compra nada y decide cuánta de la gente que llega se queda. Se puede jugar la partida entera sin firmar nada, y hay un test que lo comprueba.
+
+**Ganar no es facturar más. Ganar es poder parar.** Que lo que ya publicaste y lo que tienes ahorrado te cubran sin producir nada nuevo — y sostenerlo trabajando pocas horas, porque llegar a la cifra a base de horas no es retirarse de nada. Y llegar con la cara limpia: quien llega al número firmándolo todo llega al número y a otra cosa distinta, y tiene su propio epílogo.
 
 No se puede perder. Lo que cambia es cómo llegas.
 
@@ -20,7 +22,7 @@ No se puede perder. Lo que cambia es cómo llegas.
 
 ```bash
 npm run dev       # servidor de desarrollo
-npm test          # 341 tests: fórmulas, invariantes, determinismo, balance
+npm test          # 389 tests: fórmulas, invariantes, determinismo, balance
 npm run balance   # banco de balance: nueve políticas juegan la partida entera
 npm run build     # type-check + bundle de producción
 npm run lint
@@ -41,8 +43,9 @@ npm run lint
 | `src/sim/tunables.ts` | **Todas** las constantes de balance. Ninguna se escribe fuera de aquí |
 | `src/sim/formulas.ts` | Las ecuaciones, aisladas para testearlas una a una y exponerlas en los tooltips |
 | `src/sim/semana.ts` | La semana por franjas: el planificador, el one-hot y el plan automático |
-| `src/ui/Pestanas.tsx` | Las seis pantallas. El reproductor se queda fijo arriba y debajo va una cada vez |
-| `src/content/` | Mejoras, formatos, ciclos, casas, libros, 52 tarjetas de vida, textos del final |
+| `src/sim/patrocinios.ts` | Ofertas, contratos, modas y resacas. Con PRNG propio, a propósito |
+| `src/ui/Pestanas.tsx` | Las siete pantallas. El reproductor se queda fijo arriba y debajo va una cada vez |
+| `src/content/` | Mejoras, formatos, ciclos, casas, libros, 52 tarjetas de vida, 26 marcas, textos del final |
 | `src/ui/theme/palette.ts` | El único sitio del proyecto donde puede aparecer un color hexadecimal |
 | `tools/balance/` | Bots y arnés de balance |
 | `docs/` | GDD, brief de arte, protocolo de playtest, esquema de telemetría |
@@ -59,6 +62,19 @@ vacacionero   150 min    1.062.629    5/0      descansar llega antes y con más 
 derivado      156 min      704.609    1/0      jugar solo comprando también llega
 ```
 
+Y las cuatro reglas del sistema de marcas, cada una con su test:
+
+```
+bot           1000 €    retiro    credib.  epílogo
+integro       110 min   156 min   1.00     cómodo    no firmar no cuesta NADA: partida idéntica
+selectivo      97 min   143 min   0.88     cómodo    firmar con criterio es una jugada, no una trampa
+vendido        80 min   113 min   0.53     vendido   el dinero rápido funciona, y se cobra en el final
+```
+
+`integro` juega una partida **idéntica bit a bit** a la de antes de que existieran los
+patrocinios. No es casualidad: el sistema tiene su propio PRNG precisamente para que añadirlo no
+desplazara en silencio todo lo que el banco ya medía.
+
 ## Telemetría
 
 Opcional y anónima. Sin credenciales configuradas no manda absolutamente nada y el juego funciona igual.
@@ -71,7 +87,7 @@ El esquema está en [`docs/supabase.sql`](docs/supabase.sql). Copia `.env.exampl
 
 ## Estado
 
-Fases F0 a F6 completadas: motor, bucle, formatos, ciclos, eventos, final y balance calibrado. Queda publicar.
+Fases F0 a F8 completadas: motor, bucle, formatos, ciclos, eventos, la semana por franjas, patrocinadores, final y balance calibrado. Queda publicar.
 
 El pixel art es **provisional**: la escena está construida con capas de CSS a la espera de los lotes descritos en [`docs/brief-arte.md`](docs/brief-arte.md). Cada objeto es su propia capa para poder sustituirlo por su sprite sin tocar nada más.
 

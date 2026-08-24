@@ -13,6 +13,7 @@ import { comprar, desbloquearReparto } from './sim/shop.ts'
 import { resolver } from './sim/lifeEvents.ts'
 import { irseDeVacaciones, puedeIrseDeVacaciones } from './sim/descanso.ts'
 import { prepararEvento } from './sim/bigEvents.ts'
+import { aceptar, rechazar } from './sim/patrocinios.ts'
 import { retirarse } from './sim/final.ts'
 import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
 
@@ -60,6 +61,9 @@ interface GameStore {
   retirarse: () => void
   elegirFinal: (id: string) => void
   prepararEvento: () => void
+  aceptarOferta: (id: string) => void
+  rechazarOferta: (id: string) => void
+  cerrarResaca: () => void
   unlockAllocation: () => void
   planificar: (indice: number, bloque: BloqueId) => void
   llenarSemanaCon: (bloque: BloqueId) => void
@@ -237,6 +241,38 @@ export const useGame = create<GameStore>((set, get) => ({
     set((s) => {
       const game = prepararEvento(s.game)
       if (game !== s.game) guardar(game)
+      return { game }
+    }),
+
+  // Firmar con una marca es de las decisiones que mas duele perder: se guarda
+  // al momento, como comprar.
+  aceptarOferta: (id) =>
+    set((s) => {
+      const game = aceptar(s.game, id)
+      if (game === s.game) return s
+      guardar(game)
+      return { game }
+    }),
+
+  rechazarOferta: (id) =>
+    set((s) => {
+      const game = rechazar(s.game, id)
+      if (game === s.game) return s
+      guardar(game)
+      return { game }
+    }),
+
+  /**
+   * Cerrar el titular de la resaca reanuda la partida.
+   *
+   * Mismo patron que el aviso de ciclo: el tick vuelve a correr en cuanto
+   * `resacaPendiente` deja de ser null.
+   */
+  cerrarResaca: () =>
+    set((s) => {
+      if (s.game.resacaPendiente === null) return s
+      const game = { ...s.game, resacaPendiente: null }
+      guardar(game)
       return { game }
     }),
 

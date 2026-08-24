@@ -27,6 +27,35 @@ for (const r of results) {
 }
 
 /**
+ * LAS MARCAS — la tabla que decide si el sistema de patrocinios funciona.
+ *
+ * Tres cosas tienen que cumplirse a la vez, y las tres se leen aqui:
+ *
+ *   integro se retira            el sistema NUNCA es requisito
+ *   vendido llega antes al DINERO, no antes al retiro
+ *   vendido no saca buen final   el dinero no compra la comunidad
+ *
+ * La tercera es la que da sentido a las otras dos. Si venderse llegase antes
+ * al retiro Y sacase buen final, no habria decision: habria un boton correcto.
+ */
+console.log('\n  LAS MARCAS — que compra venderse\n')
+console.log(
+  `  ${pad('bot', 14)}${pad('firma', 8)}${pad('1000 EUR', 11)}${pad('retiro', 10)}${pad('credib.', 10)}${pad('techo', 9)}epilogo`,
+)
+console.log('  ' + '-'.repeat(74))
+for (const id of ['integro', 'selectivo', 'vendido', 'equilibrado']) {
+  const r = results.find((x) => x.botId === id)
+  if (!r) continue
+  const min = (v: number | null) => (v === null ? '—' : `${Math.round(v)} min`)
+  console.log(
+    `  ${pad(r.botId, 14)}${pad(String(r.contratos), 8)}${pad(min(r.milEurosEnMinuto), 11)}${pad(
+      min(r.retiroEnMinuto),
+      10,
+    )}${pad(r.credibilidadFinal.toFixed(2), 10)}${pad(r.techoFinal.toFixed(2), 9)}${r.epilogoFinal}`,
+  )
+}
+
+/**
  * Ritmo de la partida, no solo su final.
  *
  * La regla 2 de la seccion 12 del GDD no habla de quien gana: habla de QUIEN

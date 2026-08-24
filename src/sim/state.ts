@@ -7,6 +7,7 @@ import { houseStage } from '../content/houseStages.ts'
 import type { ModificadorActivo } from './lifeEvents.ts'
 import type { EventoActivo } from './bigEvents.ts'
 import type { Descanso } from './descanso.ts'
+import type { ContratoActivo, OfertaPendiente } from './patrocinios.ts'
 import type { FinalPartida } from './final.ts'
 import { allocationDelPlan, crearSemana, type Semana } from './semana.ts'
 import { NIVEL_POR_DEFECTO, type NivelEdicion } from './publicacion.ts'
@@ -17,7 +18,7 @@ import { TUNABLES } from './tunables.ts'
  * Version del formato de guardado. Se sube cada vez que GameState cambia de
  * forma, y se anade la migracion correspondiente en save/migrate.ts.
  */
-export const SCHEMA_VERSION = 11
+export const SCHEMA_VERSION = 12
 
 /**
  * Reparto del tiempo del creador. Siempre suma 1.
@@ -155,6 +156,68 @@ export interface GameState {
   /** Resto acumulado del generador de chat entre ticks. */
   chatAcc: number
 
+  /**
+   * CREDIBILIDAD — 0..1, lo que la gente cree que haces por dinero.
+   *
+   * Arranca intacta y solo la gasta vender. Multiplica la afinidad y los
+   * apoyos, nunca el alcance ni la publicidad: al que te descubre hoy le da
+   * igual el patrocinio, y al anunciante mas todavia. Lo que cambia es cuanta
+   * de esa gente se queda.
+   */
+  credibilidad: number
+  /**
+   * Hasta donde puede recuperarse la credibilidad.
+   *
+   * Arranca en 1 y cada resaca de moda lo baja un poco, PARA SIEMPRE. Es lo
+   * que hace que venderse pese: siempre puedes recuperarte, nunca del todo
+   * hasta donde estabas. Tiene un minimo, porque aqui no hay pozos.
+   */
+  techoCredibilidad: number
+
+  /**
+   * Ofertas de marcas esperando respuesta, con su caducidad.
+   *
+   * NO congelan la partida como las tarjetas de vida: llegan constantemente y
+   * parar el juego en cada una seria insoportable. Viven en su pantalla y
+   * avisan con el punto rojo.
+   */
+  /**
+   * PRNG propio del sistema de marcas.
+   *
+   * Aparte del general, y por una razon que vale la pena escribir: el sorteo
+   * de ofertas tira del generador todas las semanas, asi que compartir la
+   * corriente desplazaba la de TODOS los demas sistemas —tarjetas de vida,
+   * eventos grandes, momentos clippeables— y cambiaba el resultado del banco
+   * de balance incluso para una politica que no firma ni un contrato.
+   *
+   * Eso es inaceptable en este proyecto: las reglas de diseno del GDD son
+   * tests que fallan en CI, y anadir un sistema no puede mover en silencio lo
+   * que miden todos los demas. Con corriente propia, una partida que ignore
+   * las marcas es identica bit a bit a la de antes de que existieran.
+   */
+  rngMarcas: RngState
+  ofertas: OfertaPendiente[]
+  /** Contratos firmados y corriendo. */
+  contratos: ContratoActivo[]
+  /**
+   * Cuantos contratos firmaste de cada categoria, en toda la partida.
+   *
+   * No se descuenta al terminar un contrato: lo que firmaste no deja de haber
+   * pasado. Es lo que mira la resaca cuando estalla la moda.
+   */
+  aceptadosPorCategoria: Record<string, number>
+  /** Modas que ya estallaron, para no cobrarlas dos veces. */
+  resacas: string[]
+  /**
+   * Moda que acaba de estallar y cuyo titular espera a que lo lean.
+   *
+   * Mientras no sea null la simulacion esta detenida, igual que con
+   * `avisoCiclo`: leer no debe consumir partida.
+   */
+  resacaPendiente: string | null
+  /** Derivado: lo que aportan los contratos, para separarlo en la UI. */
+  ingresosPatrocinio: number
+
   // Economia
   ahorros: number
   /** Derivado: ingresos por segundo del ultimo tick, para mostrar en la UI. */
@@ -252,6 +315,19 @@ export function createInitialState(seed = 1): GameState {
     chat: [],
     chatNextId: 1,
     chatAcc: 0,
+
+    // Derivada de la semilla para que siga siendo determinista, y distinta
+    // para que las dos corrientes no vayan sincronizadas.
+    rngMarcas: createRng(seed * 2654435761 + 1),
+    ofertas: [],
+    contratos: [],
+    aceptadosPorCategoria: {},
+    resacas: [],
+    resacaPendiente: null,
+    ingresosPatrocinio: 0,
+
+    credibilidad: TUNABLES.patrocinios.credibilidad.inicial,
+    techoCredibilidad: 1,
 
     ahorros: costeVidaInicial * TUNABLES.economia.initialSavingsWeeks,
     ingresosPorSegundo: 0,

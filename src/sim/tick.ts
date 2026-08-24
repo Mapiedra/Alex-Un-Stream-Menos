@@ -8,6 +8,7 @@ import {
   calcRecuperacionFatiga,
   calcResidualTotal,
   clamp01,
+  factorAfinidad,
 } from './formulas.ts'
 import { houseLivingCost, type GameState } from './state.ts'
 import { CHAT_BUFFER, chatStep } from './chat.ts'
@@ -24,6 +25,16 @@ import {
   sortear,
 } from './lifeEvents.ts'
 import { clipMultiplier, clipStep } from './clip.ts'
+import {
+  avanzarContratos,
+  caducarOfertas,
+  credibilidadPorSegundo,
+  fatigaPorSegundo,
+  estallarModas,
+  formatoTrasContratos,
+  pagoPorSegundo,
+  sortearOferta,
+} from './patrocinios.ts'
 import {
   allocationDelBloque,
   allocationDelPlan,
@@ -61,6 +72,10 @@ export function step(state: GameState, dtMs: number): GameState {
   // La entrada de un ciclo nuevo detiene la partida por la misma razon: es
   // texto que se lee, no tiempo que se vive.
   if (state.avisoCiclo !== null) return state
+
+  // El titular de una moda que estalla se lee igual que la entrada de un
+  // ciclo, y por la misma razon se detiene el reloj mientras se lee.
+  if (state.resacaPendiente !== null) return state
 
   // La partida terminada no sigue simulando por detras.
   if (state.final) return state
@@ -154,10 +169,17 @@ export function step(state: GameState, dtMs: number): GameState {
   // es el tiempo dedicado explicitamente a la comunidad.
   // La afinidad del formato es lo que separa crecer de fidelizar: un juego
   // popular trae gente que se va, una charla trae poca que se queda.
+  // La credibilidad entra por la AFINIDAD y no por el alcance: a quien te
+  // descubre hoy le da igual el patrocinio que lleves encima. Lo que cambia es
+  // cuanta de esa gente vuelve manana.
   const conversion = calcConversion(
     state.alcance,
     calidad,
-    AFINIDAD_BASE * formato.afinidad * ev.afinidad * libros.afinidad,
+    AFINIDAD_BASE *
+      formato.afinidad *
+      ev.afinidad *
+      libros.afinidad *
+      factorAfinidad(state.credibilidad),
     alloc.comunidad,
     state.comunidad,
   )
@@ -174,7 +196,9 @@ export function step(state: GameState, dtMs: number): GameState {
   // Los formatos ligeros cansan menos: cocinar en directo no es lo mismo que
   // ocho horas de un shooter competitivo.
   const fatigaDelta =
-    alloc.produccion * TUNABLES.fatiga.gainPerSecondAtFullProduction * formato.coste * ev.fatiga -
+    alloc.produccion * TUNABLES.fatiga.gainPerSecondAtFullProduction * formato.coste * ev.fatiga +
+    // Cumplir con una marca es trabajo: hay guion que leer y plano que cuidar.
+    fatigaPorSegundo(state.contratos) -
     calcRecuperacionFatiga(state.vida, alloc.descanso + alloc.vida * 0.5)
   let fatiga = clamp01(state.fatiga + fatigaDelta * dt)
 
@@ -183,6 +207,25 @@ export function step(state: GameState, dtMs: number): GameState {
     vida = r.vida
     fatiga = r.fatiga
   }
+
+  // --- Credibilidad -------------------------------------------------------
+  /**
+   * Se cura sola despacio, y mucho mas rapido con franjas de comunidad.
+   *
+   * Recuperar la confianza de alguien se hace hablando con esa persona, no
+   * esperando a que se le olvide. El techo baja con cada resaca de moda, asi
+   * que "recuperada del todo" no significa lo mismo en la semana 10 que en la
+   * 60 — y esa es justo la cicatriz que el sistema quiere dejar.
+   */
+  const cred = TUNABLES.patrocinios.credibilidad
+  const credibilidadDelta =
+    cred.recuperaBasePorSegundo +
+    cred.recuperaPorSegundo * alloc.comunidad -
+    credibilidadPorSegundo(state.contratos)
+  const credibilidad = Math.min(
+    state.techoCredibilidad,
+    clamp01(state.credibilidad + credibilidadDelta * dt),
+  )
 
   // --- Hype ---------------------------------------------------------------
   const hypeDecay = decayRateFromHalfLife(TUNABLES.hype.halfLifeSeconds)
@@ -228,8 +271,19 @@ export function step(state: GameState, dtMs: number): GameState {
    * anuncios siguen corriendo sobre lo que ya esta subido.
    */
   const factorIngresos = (formato.ingresos ?? 1) * ev.ingresos
+  /**
+   * Lo que pagan las marcas, aparte.
+   *
+   * Aparte porque es la unica fuente de ingresos que no depende de tener
+   * publico ni catalogo: entra igual el dia que no emites. Separarla permite
+   * ensenar en pantalla que parte de lo que ganas viene de eso, que es
+   * informacion que el jugador necesita para decidir.
+   */
+  const ingresosPatrocinio = pagoPorSegundo(state.contratos)
   const ingresosPorSegundo =
-    calcIngresosDirectos(alcance, comunidad) * factorIngresos + calcResidualTotal(state)
+    calcIngresosDirectos(alcance, comunidad, credibilidad) * factorIngresos +
+    calcResidualTotal(state) +
+    ingresosPatrocinio
   const costeVidaPorSegundo = houseLivingCost(state.houseStage) / TUNABLES.secondsPerWeek
   const rendimientoAhorros =
     (state.ahorros * TUNABLES.economia.savingsYield) / (52 * TUNABLES.secondsPerWeek)
@@ -240,7 +294,15 @@ export function step(state: GameState, dtMs: number): GameState {
   const chat = emitiendo
     ? chatStep(
         clipRes.rng,
-        { alcance, comunidad, calidad, fatiga, hype },
+        {
+          alcance,
+          comunidad,
+          calidad,
+          fatiga,
+          hype,
+          credibilidad,
+          patrocinado: state.contratos.length > 0,
+        },
         dt,
         state.chatAcc,
         state.chatNextId,
@@ -276,6 +338,10 @@ export function step(state: GameState, dtMs: number): GameState {
   let legadoEficiencia = state.legadoEficiencia
   let legadoRetencion = state.legadoRetencion
   let rngSemana = chat.rng
+  let ofertas = state.ofertas
+  let contratos = state.contratos
+  let rngMarcas = state.rngMarcas
+  let formatoFinal = state.formato
   let semanaFinal: Semana = state.semana
   let volvioDeParar = false
 
@@ -324,6 +390,26 @@ export function step(state: GameState, dtMs: number): GameState {
         evento = sorteo.evento
       }
     }
+
+    /**
+     * Las marcas, semana a semana.
+     *
+     * Los contratos descuentan una semana y se caen solos al terminar; las
+     * ofertas sin responder caducan; y se sortea si llega alguna nueva. Todo
+     * en el paso de semana y no por tick: una marca no te escribe cada
+     * decima de segundo.
+     */
+    contratos = avanzarContratos(contratos)
+    // La clave se devuelve al acabar el acuerdo: si estabas emitiendo con
+    // ella, vuelves a lo tuyo.
+    formatoFinal = formatoTrasContratos(formatoFinal, contratos)
+    ofertas = caducarOfertas(ofertas, semanaNueva)
+    const oferta = sortearOferta(
+      { ...state, week: semanaNueva, ofertas, contratos, comunidad: comunidadFinal },
+      rngMarcas,
+    )
+    rngMarcas = oferta.rng
+    if (oferta.oferta) ofertas = [...ofertas, oferta.oferta]
 
     /**
      * Se acabo el tiempo: fin del periodo.
@@ -448,17 +534,32 @@ export function step(state: GameState, dtMs: number): GameState {
     fatiga,
     hype: hypeFinal,
     ideas,
+    credibilidad,
+    rngMarcas,
+    ofertas,
+    contratos,
+    formato: formatoFinal,
     ahorros,
     ingresosPorSegundo,
+    ingresosPatrocinio,
     material,
     directoManual: state.directoManual?.bloque === cursor ? state.directoManual : null,
   }
 
   const conAuto = publicarAutomatico(siguiente)
 
+  /**
+   * Las modas estallan al pasar de semana.
+   *
+   * Se aplica sobre el estado YA construido y no dentro del bloque de semana
+   * porque el golpe toca comunidad y credibilidad, que se calculan arriba:
+   * hacerlo antes seria restarle a una cifra que despues se sobrescribe.
+   */
+  const conResaca = cambiaSemana ? estallarModas(conAuto, semanaNueva) : conAuto
+
   // El avance de ciclo es automatico: cuando has llegado, has llegado. No es
   // una prueba que se pueda fallar, es un termometro de la carrera.
-  return puedeAvanzar(conAuto) ? avanzarCiclo(conAuto) : conAuto
+  return puedeAvanzar(conResaca) ? avanzarCiclo(conResaca) : conResaca
 }
 
 /**

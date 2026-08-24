@@ -1,17 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { NICK_COLOR_COUNT, chatRate, chatStep, nickColor, subRate } from '../src/sim/chat.ts'
+import {
+  CHAT_CREDIBILIDAD,
+  CHAT_INTEGRIDAD,
+  CHAT_PATROCINIO,
+} from '../src/content/chatLines.ts'
 import { NICK_COLORS } from '../src/ui/theme/palette.ts'
 import { createRng } from '../src/sim/rng.ts'
 import { createInitialState } from '../src/sim/state.ts'
 import { step } from '../src/sim/tick.ts'
 import { TUNABLES } from '../src/sim/tunables.ts'
 
+// Credibilidad intacta y sin marcas encima: el canal de siempre. Asi estos
+// tests siguen midiendo lo que median antes de que existieran los patrocinios.
 const input = (alcance: number, comunidad = 0) => ({
   alcance,
   comunidad,
   calidad: 1,
   fatiga: 0,
   hype: 0,
+  credibilidad: 1,
+  patrocinado: false,
 })
 
 describe('el chat sigue al alcance', () => {
@@ -106,5 +115,57 @@ describe('el chat dentro de la partida', () => {
     s = { ...s, allocation: { produccion: 0, comunidad: 0, vida: 0, descanso: 1 } }
     for (let i = 0; i < 200; i++) s = step(s, TUNABLES.tickMs)
     expect(s.chat).toHaveLength(0)
+  })
+})
+
+/**
+ * EL CHAT COMO VOZ DEL PUBLICO ANTE LAS MARCAS.
+ *
+ * Todas las ramas de `elegirTexto` comparten la MISMA tirada, asi que una
+ * ventana mas ancha arriba tapa entera a la de abajo. Ya paso una vez: con el
+ * patrocinio en 0.30 y la queja en 0.28, el chat no podia quejarse jamas
+ * mientras hubiera un contrato encima — que es justo cuando tiene que poder.
+ *
+ * Estos tests existen para que no vuelva a pasar en silencio.
+ */
+describe('el chat reacciona a las marcas', () => {
+  /** Junta el texto de muchos mensajes con un estado fijo. */
+  const corpus = (over: Partial<Parameters<typeof chatStep>[1]>) => {
+    const vistos = new Set<string>()
+    let rng = createRng(11)
+    for (let i = 0; i < 400; i++) {
+      const r = chatStep(rng, { ...input(20_000, 30_000), ...over }, 1, 0, 1)
+      rng = r.rng
+      for (const m of r.mensajes) vistos.add(m.text)
+    }
+    return vistos
+  }
+
+  const alguno = (vistos: Set<string>, lineas: readonly string[]) =>
+    lineas.some((l) => vistos.has(l))
+
+  it('bromea con el segmento mientras corre un contrato', () => {
+    expect(alguno(corpus({ patrocinado: true }), CHAT_PATROCINIO)).toBe(true)
+  })
+
+  /** LA regresion: la queja tiene que caber aunque haya un contrato encima. */
+  it('y ademas puede quejarse, aunque haya un contrato encima', () => {
+    const vistos = corpus({ patrocinado: true, credibilidad: 0.4 })
+    expect(alguno(vistos, CHAT_CREDIBILIDAD)).toBe(true)
+    expect(alguno(vistos, CHAT_PATROCINIO)).toBe(true)
+  })
+
+  it('con la cara limpia y sin marcas, lo agradece', () => {
+    expect(alguno(corpus({ credibilidad: 1, patrocinado: false }), CHAT_INTEGRIDAD)).toBe(true)
+  })
+
+  /**
+   * El canal de siempre no habla de marcas. Si esto falla, alguna rama nueva
+   * se esta colando en una partida que no ha firmado nada.
+   */
+  it('un canal sin patrocinios nunca ve una linea de anuncio', () => {
+    const vistos = corpus({ credibilidad: 1, patrocinado: false })
+    expect(alguno(vistos, CHAT_PATROCINIO)).toBe(false)
+    expect(alguno(vistos, CHAT_CREDIBILIDAD)).toBe(false)
   })
 })

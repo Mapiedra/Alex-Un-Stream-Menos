@@ -144,6 +144,58 @@ export const CONTENT_TYPES: ContentType[] = [
     ingresos: 0,
     requiere: '@evento',
   },
+  /**
+   * LAS CLAVES DE PRENSA.
+   *
+   * No se eligen ni se compran: las concede un contrato con una editora
+   * mientras dura, igual que los eventos conceden la conferencia. Por eso
+   * llevan `requiere: '@evento'` como los demas formatos que da el sistema.
+   *
+   * Los tres perfiles son la decision entera del sistema puesta en numeros: el
+   * superventas llena la calle de gente que se va, el mediano no destaca en
+   * nada, y el indie que no paga trae a cuatro personas que no se van nunca.
+   * Que la clave gratis del estudio de tres valga MAS que el cheque de la
+   * editora grande es la tesis del juego dicha con otro sistema.
+   */
+  {
+    id: 'clave-aaa',
+    nombre: 'El juego del que habla todo el mundo',
+    titulo: 'ESTRENO — el juego del año, primeras horas',
+    descripcion:
+      'Clave anticipada de un superventas. Entra muchisima gente y se va casi toda: vienen al juego, no a ti.',
+    alcance: 1.8,
+    afinidad: 0.4,
+    calidad: 1,
+    coste: 1.2,
+    actividad: 'produccion',
+    requiere: '@evento',
+  },
+  {
+    id: 'clave-media',
+    nombre: 'Un juego mediano',
+    titulo: 'Probando algo que me han mandado',
+    descripcion:
+      'Ni pico ni consolidacion. Un juego correcto que hace lo que hace el directo normal, y encima pagan.',
+    alcance: 1.1,
+    afinidad: 0.9,
+    calidad: 1.05,
+    coste: 0.95,
+    actividad: 'produccion',
+    requiere: '@evento',
+  },
+  {
+    id: 'clave-indie',
+    nombre: 'El indie que no conoce nadie',
+    titulo: 'Un juego que no ha jugado nadie, y deberiais',
+    descripcion:
+      'No lo va a ver casi nadie. La que lo vea se queda: ensenar algo pequeno porque te ha gustado es lo que construye una comunidad.',
+    alcance: 0.45,
+    afinidad: 2.6,
+    calidad: 1.3,
+    coste: 0.85,
+    actividad: 'produccion',
+    requiere: '@evento',
+  },
   {
     id: 'clip',
     nombre: 'Clip viral',

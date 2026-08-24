@@ -139,6 +139,13 @@ export const TOKENS = {
   ingresos: PALETTE.acid400,
   ideas: PALETTE.rain400,
   fatiga: PALETTE.red500,
+  /**
+   * CREDIBILIDAD: la piel del avatar. Es, literalmente, la cara que das.
+   *
+   * No es un color de neon como los demas recursos y es a proposito: la
+   * credibilidad no es una cifra del canal, es algo tuyo.
+   */
+  credibilidad: PALETTE.skin300,
 
   // Escena
   sceneSky: PALETTE.night900,

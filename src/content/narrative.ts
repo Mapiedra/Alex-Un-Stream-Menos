@@ -11,6 +11,11 @@ import type { Epilogo } from '../sim/final.ts'
  *
  * NO HAY DERROTA. "La rueda" no es un final malo: es el final por defecto de
  * quien decide parar sin haber llegado al umbral, y se cuenta con respeto.
+ *
+ * "Salio a cuenta" tampoco es una derrota, y es el que mas cuidado pide: quien
+ * llega ahi ha ganado en todo lo que el juego mide, y el epilogo no puede
+ * regoderse ni darle una leccion. Lo unico que hace es contar lo que no se
+ * medía. Sin moraleja y sin senalar: se dice lo que hay.
  */
 
 export const PREGUNTA_FINAL =
@@ -92,6 +97,17 @@ export const EPILOGOS: Record<Epilogo, TextoEpilogo> = {
     conBurnout: 'Con algún susto por el camino, pero aquí estás.',
     sinBurnout: 'Sin haberte roto por el camino, que no es poco.',
   },
+  vendido: {
+    titulo: 'Salió a cuenta',
+    cuerpo: [
+      'Las cuentas salen, y salen con holgura. Nadie puede decir que no funcionara: cada vez que te pusieron una cifra delante dijiste que sí, y las cifras eran de verdad.',
+      'Lo raro es el chat. Sigue habiendo gente, sigue habiendo mensajes, y aun así hay algo que se movió de sitio en algún momento y no volvió. La gente que se quedó no se quedó del todo. Miran el directo como se mira un programa: está bien, lo ponen, no discuten con él.',
+      'De vez en cuando alguien saca por ahí un clip de hace tres años, de una de aquellas semanas, y se lo pasan entre ellos. No con rencor. Con esa cosa peor que es la costumbre.',
+      'Puedes parar cuando quieras. Eso lo conseguiste. Lo otro —lo de que hubiera alguien esperando a que volvieras— resulta que se pagaba en la misma moneda que fuiste gastando.',
+    ],
+    conBurnout: 'Y encima te costó la salud por el camino, que ya es tener mala suerte.',
+    sinBurnout: 'Llegaste entero. Eso también cuenta, aunque hoy no lo parezca.',
+  },
   rueda: {
     titulo: 'Sigues ahí',
     cuerpo: [
@@ -109,5 +125,6 @@ export const EPILOGOS: Record<Epilogo, TextoEpilogo> = {
 export const NOMBRE_EPILOGO: Record<Epilogo, string> = {
   comodo: 'Retiro cómodo',
   justo: 'Retiro justo',
+  vendido: 'Salió a cuenta',
   rueda: 'La rueda',
 }

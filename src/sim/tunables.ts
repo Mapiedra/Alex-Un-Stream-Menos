@@ -300,6 +300,101 @@ export const TUNABLES = {
     coberturaComoda: 1.8,
   },
 
+  /**
+   * PATROCINIOS — la tercera via economica, y la unica que cobra hoy.
+   *
+   * El juego ya sabe contar esta tension en otro sitio: publicar `rapido`
+   * rinde HOY y publicar `cuidado` construye el final. Un patrocinio es esa
+   * misma decision llevada al plano de la gente — cobras ahora y lo pagas en
+   * quien se queda.
+   *
+   * Las ofertas son CONSTANTES a proposito. Un patrocinio que saliera una vez
+   * cada veinte semanas seria un evento; lo que se quiere modelar es convivir
+   * con el goteo, y que decir que no sea barato y repetido.
+   */
+  patrocinios: {
+    /** Ofertas pendientes a la vez. Mas es una bandeja, no una decision. */
+    maxOfertas: 3,
+    /**
+     * Contratos simultaneos.
+     *
+     * Sin tope, apilar contratos convierte la decision en una tabla de sumas:
+     * la respuesta optima seria siempre "todos" y no habria nada que elegir.
+     */
+    maxContratos: 2,
+    /** Semanas que una oferta espera antes de caducar sola. */
+    semanasDeOferta: 2,
+    /**
+     * Probabilidad por semana de que llegue una oferta, si cabe alguna mas.
+     *
+     * Calibrado contra el banco. Con 0.8 la bandeja no se vaciaba nunca y los
+     * dos huecos de contrato estaban ocupados el 100% de la partida: firmar
+     * dejaba de ser un adelanto puntual y pasaba a ser una nomina paralela.
+     */
+    ofertasPorSemana: 0.45,
+    /** Comunidad minima: a quien no ve nadie no le escribe ninguna marca. */
+    comunidadMinima: 400,
+    /**
+     * Por debajo de esta credibilidad, el retiro es el epilogo `vendido`.
+     *
+     * Tienes el dinero pero no a la gente. Se comprueba ANTES que la cobertura
+     * a proposito: haberte vendido tapa incluso un retiro holgado, que es
+     * exactamente lo que el juego quiere decir.
+     */
+    umbralVendido: 0.6,
+    /**
+     * Techo por debajo del cual el retiro tambien es el epilogo `vendido`.
+     *
+     * El techo solo lo baja la resaca de una moda, asi que esto mide algo muy
+     * concreto: cuantas veces estuviste dentro cuando estallo. Con 0.8 hacen
+     * falta un par de contratos de moda — una vez es un error, dos veces ya
+     * es una forma de trabajar.
+     *
+     * Calibrado con margen a proposito. Con 0.8 el bot que firma todo acababa
+     * en 0.79 y el epilogo se decidia por una centesima: una clasificacion a
+     * filo de navaja habria dependido de la semilla, no de como jugaste.
+     */
+    umbralTechoVendido: 0.9,
+
+    /**
+     * CREDIBILIDAD — 0..1, lo que la gente cree que haces por dinero.
+     *
+     * Multiplica la AFINIDAD y los APOYOS, nunca el alcance ni la publicidad.
+     * La asimetria es la idea entera: a quien te descubre hoy le da igual lo
+     * que firmaste, y al anunciante mas todavia. Lo que cambia es cuanta de
+     * esa gente se queda y cuanta te apoya con su dinero.
+     */
+    credibilidad: {
+      inicial: 1,
+      /**
+       * Recuperacion por segundo pase lo que pase. El tiempo lo cura casi
+       * todo, y "casi" es la palabra importante: es diez veces mas lento que
+       * dedicarle franjas.
+       */
+      recuperaBasePorSegundo: 0.00004,
+      /**
+       * Recuperacion por segundo con la semana entera en comunidad. Recuperar
+       * la confianza de alguien se hace hablando con esa persona, no
+       * esperando.
+       */
+      recuperaPorSegundo: 0.0004,
+      /**
+       * Suelo del multiplicador de afinidad. Venderse del todo no te deja sin
+       * nadie: hay gente que se queda pase lo que pase, y sin suelo esto seria
+       * una espiral de muerte en un juego que no tiene derrota.
+       */
+      sueloAfinidad: 0.3,
+      /** Suelo del multiplicador de apoyos. */
+      sueloApoyos: 0.4,
+      /**
+       * Suelo del techo. Cada resaca de moda baja el techo para siempre, pero
+       * nunca por debajo de aqui: el juego no tiene estados de los que no se
+       * pueda salir.
+       */
+      techoMinimo: 0.55,
+    },
+  },
+
   /** MOMENTO CLIPPEABLE — contrato de accesibilidad. */
   clip: {
     /** Segundos de ventana para reaccionar. Nunca por debajo de 3. */

@@ -1,8 +1,16 @@
-export type PantallaId = 'semana' | 'canal' | 'tienda' | 'vida' | 'carrera' | 'ayuda'
+export type PantallaId =
+  | 'semana'
+  | 'canal'
+  | 'marcas'
+  | 'tienda'
+  | 'vida'
+  | 'carrera'
+  | 'ayuda'
 
 export const PANTALLAS: Array<{ id: PantallaId; nombre: string; ayuda: string }> = [
   { id: 'semana', nombre: 'Semana', ayuda: 'Repartir las franjas y lanzar la semana' },
   { id: 'canal', nombre: 'Canal', ayuda: 'Cómo va: curvas, cifras y formato' },
+  { id: 'marcas', nombre: 'Marcas', ayuda: 'Quién quiere pagarte y qué te va a costar' },
   { id: 'tienda', nombre: 'Tienda', ayuda: 'Equipo, flujo, rutina, casa y formatos' },
   { id: 'vida', nombre: 'Vida', ayuda: 'Parar, momentos grandes y la mesilla' },
   { id: 'carrera', nombre: 'Carrera', ayuda: 'Dónde vas y qué falta para poder dejarlo' },
