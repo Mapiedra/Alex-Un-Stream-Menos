@@ -12,10 +12,13 @@ import { clipCatch } from './sim/clip.ts'
 import { comprar, desbloquearReparto } from './sim/shop.ts'
 import { resolver } from './sim/lifeEvents.ts'
 import { irseDeVacaciones, puedeIrseDeVacaciones } from './sim/descanso.ts'
-import { prepararEvento } from './sim/bigEvents.ts'
+import { marcarAnunciado, prepararEvento } from './sim/bigEvents.ts'
 import { aceptar, rechazar } from './sim/patrocinios.ts'
 import { retirarse } from './sim/final.ts'
 import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
+import { derivarRegistro, empujarRegistro, type EntradaRegistro } from './hud/registro.ts'
+import { cerrarSemana, instantanea, type BalanceSemana, type Instantanea } from './hud/balance.ts'
+import { FLOTANTE_MS, saltos, saltosDeMejora, type Flotante } from './hud/flotantes.ts'
 
 /** Cada cuantos ms de tiempo real se autoguarda. */
 const AUTOSAVE_MS = 10_000
@@ -44,6 +47,28 @@ interface GameStore {
   /** Mensaje para la UI cuando la carga de la partida no sale bien. */
   avisoCarga: string | null
 
+  /**
+   * Igual que `paused`, pero para lo que abre el juego y no el jugador.
+   *
+   * Existe separado a proposito: si la irrupcion de un evento reutilizase
+   * `paused`, cerrarla reanudaria una partida que el jugador habia pausado a
+   * mano. Son dos motivos distintos para que el reloj este quieto.
+   */
+  pausaNarrativa: boolean
+
+  /**
+   * LO QUE NO ES LA PARTIDA.
+   *
+   * Registro, balance y flotantes viven aqui y no en `GameState`: se derivan
+   * de comparar estados, no se guardan y no los mira el motor. Perderlos al
+   * recargar es exactamente lo que deben hacer.
+   */
+  registro: EntradaRegistro[]
+  registroId: number
+  flotantes: Flotante[]
+  /** Cierre de la ultima semana vivida. Se borra al lanzar la siguiente. */
+  balanceSemana: BalanceSemana | null
+
   nuevaPartida: (seed?: number) => void
   continuar: () => void
   volverAlMenu: () => void
@@ -68,8 +93,10 @@ interface GameStore {
   planificar: (indice: number, bloque: BloqueId) => void
   llenarSemanaCon: (bloque: BloqueId) => void
   vivirSemana: () => void
+  marcarEventoAnunciado: () => void
   setSpeed: (m: number) => void
   setPaused: (p: boolean) => void
+  setPausaNarrativa: (p: boolean) => void
   reset: (seed?: number) => void
   saveNow: () => void
 }
@@ -98,6 +125,50 @@ const inicial = estadoInicial()
 /** Acumulador del autoguardado. Fuera del estado: no es parte de la partida. */
 let desdeUltimoGuardado = 0
 
+/**
+ * Foto del estado al empezar la semana en curso, para poder cerrarla.
+ *
+ * Fuera del store porque no se pinta nunca: solo se lee en el instante exacto
+ * del cambio de semana. Meterla en el estado obligaria a React a considerar
+ * un cambio que no altera ni un pixel.
+ */
+let inicioSemana: Instantanea | null = null
+
+let flotanteId = 1
+
+/** Retira los flotantes recien emitidos cuando termine su animacion. */
+function caducarFlotantes(ids: readonly number[]): void {
+  if (ids.length === 0) return
+  setTimeout(() => {
+    useGame.setState((s) => ({ flotantes: s.flotantes.filter((f) => !ids.includes(f.id)) }))
+  }, FLOTANTE_MS)
+}
+
+/**
+ * El resultado de una accion del jugador, con su rastro en el HUD.
+ *
+ * Toda accion que no haga correr la simulacion pasa por aqui: cualquier
+ * diferencia que produzca es, por construccion, consecuencia de lo que acaba
+ * de pulsar, asi que se puede anotar y pintar sin heuristicas.
+ */
+function conHud(
+  s: GameStore,
+  antes: GameState,
+  ahora: GameState,
+  extra: ReturnType<typeof saltosDeMejora> = [],
+): Partial<GameStore> {
+  const r = empujarRegistro(s.registro, derivarRegistro(antes, ahora), s.registroId)
+  const nuevos = [...saltos(antes, ahora), ...extra].map((f) => ({ ...f, id: flotanteId++ }))
+  caducarFlotantes(nuevos.map((f) => f.id))
+
+  return {
+    game: ahora,
+    registro: r.registro,
+    registroId: r.siguienteId,
+    flotantes: [...s.flotantes, ...nuevos],
+  }
+}
+
 export const useGame = create<GameStore>((set, get) => ({
   game: inicial.game,
   fase: 'menu',
@@ -105,6 +176,11 @@ export const useGame = create<GameStore>((set, get) => ({
   speedMultiplier: 1,
   paused: false,
   avisoCarga: inicial.avisoCarga,
+  pausaNarrativa: false,
+  registro: [],
+  registroId: 1,
+  flotantes: [],
+  balanceSemana: null,
 
   /**
    * Empezar de cero.
@@ -115,16 +191,36 @@ export const useGame = create<GameStore>((set, get) => ({
   nuevaPartida: (seed) => {
     borrarGuardado()
     desdeUltimoGuardado = 0
+    const game = { ...createInitialState(seed), avisoCiclo: 1 }
+    inicioSemana = instantanea(game)
     set({
-      game: { ...createInitialState(seed), avisoCiclo: 1 },
+      game,
       fase: 'jugando',
       hayGuardado: false,
       paused: false,
+      pausaNarrativa: false,
       avisoCarga: null,
+      registro: [],
+      registroId: 1,
+      flotantes: [],
+      balanceSemana: null,
     })
   },
 
-  continuar: () => set({ fase: 'jugando', paused: false }),
+  // El registro empieza vacio tambien al continuar: no se guarda, y fingir
+  // que recuerdas lo que paso hace tres dias seria inventarselo.
+  continuar: () => {
+    inicioSemana = instantanea(get().game)
+    set({
+      fase: 'jugando',
+      paused: false,
+      pausaNarrativa: false,
+      registro: [],
+      registroId: 1,
+      flotantes: [],
+      balanceSemana: null,
+    })
+  },
 
   // Volver al menu guarda: salir no puede costarte los ultimos diez segundos.
   volverAlMenu: () => {
@@ -142,8 +238,9 @@ export const useGame = create<GameStore>((set, get) => ({
 
   advance: (dtMs) =>
     set((s) => {
-      if (s.paused) return s
-      const game = step(s.game, dtMs * s.speedMultiplier)
+      if (s.paused || s.pausaNarrativa) return s
+      const antes = s.game
+      const game = step(antes, dtMs * s.speedMultiplier)
 
       desdeUltimoGuardado += dtMs
       if (desdeUltimoGuardado >= AUTOSAVE_MS) {
@@ -151,7 +248,23 @@ export const useGame = create<GameStore>((set, get) => ({
         guardar(game)
       }
 
-      return { game }
+      // El tick NO emite flotantes: aqui las cifras se mueven cada frame y
+      // un numero saltando sin parar deja de significar nada. Solo anota.
+      const r = empujarRegistro(s.registro, derivarRegistro(antes, game), s.registroId)
+
+      // Cambio de semana: se cierra la que acaba de vivirse con el reparto
+      // con el que se vivio, y se abre la foto de la siguiente.
+      let balanceSemana = s.balanceSemana
+      if (game.week > antes.week) {
+        balanceSemana = cerrarSemana(
+          inicioSemana ?? instantanea(antes),
+          antes,
+          antes.semana.bloques,
+        )
+        inicioSemana = instantanea(game)
+      }
+
+      return { game, balanceSemana, registro: r.registro, registroId: r.siguienteId }
     }),
 
   // Publicar cuesta material y elige nivel: es una decision, no un tic.
@@ -160,7 +273,7 @@ export const useGame = create<GameStore>((set, get) => ({
       const game = publicar(s.game, nivel)
       if (game === s.game) return s
       guardar(game)
-      return { game }
+      return conHud(s, s.game, game)
     }),
 
   // Empezar o cortar el directo. La semana pone el marco, esto el momento.
@@ -181,15 +294,19 @@ export const useGame = create<GameStore>((set, get) => ({
   catchClip: () =>
     set((s) => {
       const r = clipCatch(s.game.clip, s.game.rng)
-      return { game: { ...s.game, clip: r.clip, rng: r.rng } }
+      const game = { ...s.game, clip: r.clip, rng: r.rng }
+      return conHud(s, s.game, game)
     }),
 
   // Comprar es una decision que duele perder: se guarda al momento.
   buy: (id) =>
     set((s) => {
       const game = comprar(s.game, id)
-      if (game !== s.game) guardar(game)
-      return { game }
+      if (game === s.game) return s
+      guardar(game)
+      // Comprar no mueve ningun recurso: mueve multiplicadores. Sin el extra,
+      // seria la unica accion cara del juego que no responde al pulsarla.
+      return conHud(s, s.game, game, saltosDeMejora(s.game, game))
     }),
 
   // Cambiar de formato es la decision estrategica central: se guarda al vuelo.
@@ -208,7 +325,7 @@ export const useGame = create<GameStore>((set, get) => ({
       if (!id) return s
       const game = resolver(s.game, id, opcion)
       guardar(game)
-      return { game }
+      return conHud(s, s.game, game)
     }),
 
   // Parar es una decision del jugador, y de las importantes: se guarda.
@@ -217,7 +334,7 @@ export const useGame = create<GameStore>((set, get) => ({
       if (!puedeIrseDeVacaciones(s.game)) return s
       const game = irseDeVacaciones({ ...s.game, repartoAntesDeParar: s.game.allocation })
       guardar(game)
-      return { game }
+      return conHud(s, s.game, game)
     }),
 
   // Cerrar la partida. Se puede hacer con las condiciones cumplidas o sin
@@ -251,7 +368,7 @@ export const useGame = create<GameStore>((set, get) => ({
       const game = aceptar(s.game, id)
       if (game === s.game) return s
       guardar(game)
-      return { game }
+      return conHud(s, s.game, game)
     }),
 
   rechazarOferta: (id) =>
@@ -311,16 +428,46 @@ export const useGame = create<GameStore>((set, get) => ({
       if (s.game.semana.fase !== 'planificando') return s
       const game = { ...s.game, semana: { ...s.game.semana, fase: 'viviendo' as const } }
       guardar(game)
+      // El balance era el cierre de la anterior: al lanzar esta, sobra.
+      inicioSemana = instantanea(game)
+      return { game, balanceSemana: null }
+    }),
+
+  /**
+   * La irrupcion de un evento ya se ha visto.
+   *
+   * `anunciado` existia en el motor desde F4 y no lo usaba nadie: se ponia a
+   * false en cada cambio de fase y ahi se quedaba. Es exactamente la marca que
+   * necesita una interrupcion que debe verse UNA vez por fase, y como vive en
+   * la partida, recargar no vuelve a ensenar lo mismo.
+   */
+  marcarEventoAnunciado: () =>
+    set((s) => {
+      if (!s.game.evento || s.game.evento.anunciado) return s
+      const game = { ...s.game, evento: marcarAnunciado(s.game.evento) }
+      guardar(game)
       return { game }
     }),
 
   setSpeed: (m) => set({ speedMultiplier: m }),
   setPaused: (p) => set({ paused: p }),
+  setPausaNarrativa: (p) => set({ pausaNarrativa: p }),
 
   reset: (seed) => {
     borrarGuardado()
     desdeUltimoGuardado = 0
-    set({ game: createInitialState(seed), paused: false, avisoCarga: null })
+    const game = createInitialState(seed)
+    inicioSemana = instantanea(game)
+    set({
+      game,
+      paused: false,
+      pausaNarrativa: false,
+      avisoCarga: null,
+      registro: [],
+      registroId: 1,
+      flotantes: [],
+      balanceSemana: null,
+    })
   },
 
   saveNow: () => guardar(get().game),

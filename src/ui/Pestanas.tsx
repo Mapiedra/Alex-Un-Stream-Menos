@@ -22,6 +22,16 @@ interface Props {
   onCambiar: (id: PantallaId) => void
   /** Pantallas que reclaman atencion ahora mismo. */
   avisos: Partial<Record<PantallaId, boolean>>
+  /**
+   * Pantallas que ya existen para este jugador.
+   *
+   * La interfaz crece con el personaje. Ensenar siete pestanas en el minuto
+   * uno —cuando cuatro de ellas estan vacias porque sus sistemas no han
+   * empezado— no informa de nada: entrena a ignorar la barra entera. Una
+   * pantalla aparece cuando tiene algo dentro, y aparecer es en si mismo la
+   * noticia de que el juego se ha hecho mas grande.
+   */
+  disponibles: readonly PantallaId[]
 }
 
 /**
@@ -35,10 +45,10 @@ interface Props {
  * El punto rojo no es decoracion: marca lo que esta esperando una decision.
  * Sin el, acabarse la semana en la pestaña de la tienda seria invisible.
  */
-export function Pestanas({ activa, onCambiar, avisos }: Props) {
+export function Pestanas({ activa, onCambiar, avisos, disponibles }: Props) {
   return (
     <nav className="pestanas" aria-label="Pantallas">
-      {PANTALLAS.map((p) => (
+      {PANTALLAS.filter((p) => disponibles.includes(p.id)).map((p) => (
         <button
           key={p.id}
           className="pestanas__boton"

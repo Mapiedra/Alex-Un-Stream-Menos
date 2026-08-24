@@ -20,7 +20,7 @@ export function ResourceRow({ label, value, token, hint }: Props) {
         padding: 'var(--space-1) 0',
       }}
     >
-      <span className="pixel" style={{ fontSize: 'var(--px-8)', color: `var(--c-${token})` }}>
+      <span className="pixel" style={{ fontSize: 'var(--pixel-s)', color: `var(--c-${token})` }}>
         {label}
       </span>
       <span className="data" style={{ color: 'var(--c-textBright)' }}>

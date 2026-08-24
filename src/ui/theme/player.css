@@ -63,7 +63,7 @@
 
 .player-header__verificado {
   color: var(--c-accent);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .player-header__titulo {
@@ -85,7 +85,7 @@
 .badge-live {
   background: var(--c-live);
   color: var(--c-textBright);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5px;
   padding: 2px var(--space-2);
@@ -94,6 +94,36 @@
 .player-header__viewers {
   color: var(--c-live);
   font-weight: 600;
+}
+
+/* Discreto pero siempre ahi: es la salida, no una accion del juego. */
+.player-header__salir {
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: none;
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--c-borderStrong);
+  color: var(--c-textMuted);
+  white-space: nowrap;
+}
+
+.player-header__salir:hover {
+  background: var(--c-bgRaised);
+  color: var(--c-textBright);
+}
+
+@media (max-width: 620px) {
+  .player-header__salir {
+    /* En movil manda el titulo del directo; la salida se queda en su icono. */
+    font-size: 0;
+    padding: var(--space-2);
+  }
+
+  .player-header__salir::after {
+    content: '⏻';
+    font-size: 14px;
+  }
 }
 
 /* ---------- Escena: habitacion + calle por la ventana ---------- */
@@ -448,8 +478,13 @@
   background: var(--c-accent);
 }
 
+/* Envuelve. La fila lleva pausa, reloj y cuatro botones de accion, y en un
+   movil eso no cabe en una linea: sin `wrap` la barra empujaba la pagina
+   entera a 660 px de ancho y aparecia scroll horizontal en TODA la
+   aplicacion, barra de pantallas incluida. */
 .controles__fila {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
 }
@@ -470,6 +505,7 @@
 .controles__derecha {
   margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -595,7 +631,7 @@
 }
 
 .stat__label {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -736,7 +772,7 @@
 
 .mejora__efecto {
   color: var(--c-alcance);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .mejora__boton {
@@ -770,13 +806,13 @@
 }
 
 .spark__pie {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
 
 .spark__tendencia {
-  font-size: 9px;
+  font-size: 12px;
 }
 
 /* ---------- Formatos ---------- */
@@ -852,7 +888,7 @@
 }
 
 .perfil__etiqueta {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--c-textDim);
@@ -894,7 +930,7 @@
 .tarjeta__titulo {
   margin: 0;
   font-family: var(--font-pixel);
-  font-size: var(--px-16);
+  font-size: var(--pixel-m);
   color: var(--c-textBright);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -922,7 +958,7 @@
 
 .tarjeta__nota {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-textDim);
   text-align: center;
 }
@@ -938,7 +974,7 @@
 }
 
 .carrera__kicker {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--c-accent);
@@ -990,7 +1026,7 @@
 
 .requisito__progreso {
   color: var(--c-textDim);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .modificadores {
@@ -1003,7 +1039,7 @@
 }
 
 .modificador {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-calidad);
   border: 1px solid var(--c-border);
   padding: 2px var(--space-2);
@@ -1050,7 +1086,7 @@
 .franja__cabecera {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1090,7 +1126,7 @@
   display: flex;
   align-items: center;
   padding-left: var(--space-2);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--c-textBright);
@@ -1114,7 +1150,7 @@
 
 .momentos__meta {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-textDim);
 }
 
@@ -1152,7 +1188,7 @@
 
 .momentos__legado {
   margin: var(--space-3) 0 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-calidad);
   border-top: 1px solid var(--c-border);
   padding-top: var(--space-2);
@@ -1212,7 +1248,7 @@
 }
 
 .resumen__dato dt {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--c-textDim);
@@ -1331,12 +1367,12 @@
 
 .muro__pct {
   text-align: right;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .muro__nota {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-textDim);
 }
 
@@ -1366,13 +1402,13 @@
 }
 
 .menu__kicker {
-  font-size: var(--px-8);
+  font-size: var(--pixel-s);
   color: var(--c-textDim);
 }
 
 .menu__titulo {
   margin: 0;
-  font-size: var(--px-24);
+  font-size: var(--pixel-l);
   color: var(--c-textBright);
   line-height: 1.3;
 }
@@ -1410,7 +1446,7 @@
 }
 
 .menu__boton-nota {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-textDim);
 }
 
@@ -1442,7 +1478,7 @@
 .ayuda__titulo {
   margin: 0;
   font-family: var(--font-pixel);
-  font-size: var(--px-16);
+  font-size: var(--pixel-m);
   color: var(--c-textBright);
   text-transform: uppercase;
 }
@@ -1461,7 +1497,7 @@
 .ayuda__seccion {
   margin: 0;
   font-family: var(--font-pixel);
-  font-size: var(--px-8);
+  font-size: var(--pixel-s);
   color: var(--c-accent);
   text-transform: uppercase;
 }
@@ -1495,7 +1531,7 @@
 
 .ayuda__termino dt {
   font-family: var(--font-pixel);
-  font-size: var(--px-8);
+  font-size: var(--pixel-s);
   text-transform: uppercase;
 }
 
@@ -1601,8 +1637,8 @@
 
 .rejilla__dia,
 .rejilla__franja {
-  font-size: var(--px-8);
-  color: var(--c-textDim);
+  font-size: var(--pixel-s);
+  color: var(--c-textMuted);
   align-self: center;
 }
 
@@ -1616,13 +1652,15 @@
 }
 
 .rejilla__celda {
-  min-height: 34px;
-  padding: var(--space-1);
+  /* La rejilla es LA pantalla de decision del juego y se lee veintiuna veces
+     por semana: aqui el tamano no es cuestion de estilo. */
+  min-height: 42px;
+  padding: var(--space-2) var(--space-1);
   border: 1px solid var(--c-border);
-  border-left: 3px solid var(--bloque, var(--c-border));
+  border-left: 4px solid var(--bloque, var(--c-border));
   background: var(--c-bg);
   font-family: var(--font-data);
-  font-size: 10px;
+  font-size: 13px;
   text-transform: none;
   color: var(--c-textMuted);
   overflow: hidden;
@@ -1687,7 +1725,7 @@
 
 @media (max-width: 620px) {
   .rejilla__celda {
-    min-height: 28px;
+    min-height: 34px;
     font-size: 0;
   }
 
@@ -1700,7 +1738,7 @@
 
 .controles__directo {
   font-family: var(--font-data);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: none;
   padding: var(--space-1) var(--space-3);
   white-space: nowrap;
@@ -1713,7 +1751,7 @@
 
 .controles__material {
   color: var(--c-ingresos);
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -1727,7 +1765,7 @@
   align-items: baseline;
   gap: var(--space-1);
   font-family: var(--font-data);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: none;
   padding: var(--space-1) var(--space-2);
   white-space: nowrap;
@@ -1745,7 +1783,7 @@
 
 .publicar__coste {
   color: var(--c-textDim);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .publicar__nivel:disabled {
@@ -1801,7 +1839,7 @@
   border: 1px solid var(--c-border);
   border-left: 3px solid var(--c-calidad);
   padding: var(--space-1) var(--space-2);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--c-textMuted);
 }
 
@@ -1819,7 +1857,7 @@
 
 .lectura__tema {
   color: var(--c-textDim);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .lectura__sinergias {
@@ -1833,7 +1871,7 @@
 .menu__descargo {
   margin: 0;
   max-width: 60ch;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.6;
   color: var(--c-textDim);
   border-left: 1px solid var(--c-border);
@@ -1858,7 +1896,7 @@
 .pestanas__boton {
   position: relative;
   font-family: var(--font-pixel);
-  font-size: var(--px-8);
+  font-size: var(--pixel-s);
   text-transform: uppercase;
   padding: var(--space-2) var(--space-4);
   border: 1px solid transparent;
@@ -1933,7 +1971,7 @@
 
 .tienda__moneda {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--c-textDim);
   border-left: 1px solid var(--c-border);
@@ -1969,7 +2007,7 @@
 
 .marcas__seccion {
   margin: var(--space-2) 0 0;
-  font-size: var(--px-8);
+  font-size: var(--pixel-s);
   color: var(--c-textMuted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2093,4 +2131,761 @@
 /* Un formato que presta un contrato, no uno que hayas desbloqueado tu. */
 .formato__prestado {
   color: var(--c-credibilidad);
+}
+
+/* ==========================================================================
+   EL MARCADOR — las tres preguntas, dentro del reproductor
+
+   Va PEGADO a la barra de controles y no debajo del reproductor porque el
+   bloque del reproductor mide 100dvh: cualquier cosa colocada despues nace
+   fuera de pantalla. Un marcador al que hay que hacer scroll no es un
+   marcador. Lo que le quita de alto a la escena es exactamente lo que gana
+   en no tener que buscarse.
+   ========================================================================== */
+
+.marcador {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  background: var(--c-bgPanel);
+  border-top: 1px solid var(--c-border);
+}
+
+.marcador__recursos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+/* El ticker cruza las dos columnas: es el pie de todo el bloque. */
+.marcador__ticker {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--c-border);
+  font-size: 12px;
+  color: var(--c-textMuted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.marcador__glifo {
+  display: inline-block;
+  min-width: 14px;
+  margin-right: var(--space-2);
+}
+
+.marcador__quieto {
+  color: var(--c-textDim);
+  font-style: italic;
+}
+
+/* ---------- Una celda de recurso ---------- */
+
+.recurso {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.recurso__etiqueta {
+  font-family: var(--font-pixel);
+  font-size: var(--pixel-s);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.recurso__valor {
+  color: var(--c-textBright);
+  font-size: 20px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* EL RITMO. Va siempre, tambien cuando es cero o negativo: media tesis del
+   juego es que el alcance cae solo, y un contador que solo ensena numeros
+   subiendo cuenta la mitad de la historia. */
+.recurso__ritmo {
+  font-size: 13px;
+  color: var(--c-textDim);
+}
+
+.recurso__ritmo[data-signo="sube"] {
+  color: var(--c-positive);
+}
+
+.recurso__ritmo[data-signo="baja"] {
+  color: var(--c-negative);
+}
+
+.recurso__medidor {
+  display: block;
+  height: 3px;
+  margin-top: 2px;
+  background: var(--c-border);
+}
+
+.recurso__medidor > span {
+  display: block;
+  height: 100%;
+  transition: width 0.3s linear;
+}
+
+.recurso__nota {
+  font-size: 12px;
+  color: var(--c-textDim);
+}
+
+/* ---------- Los numeros que suben ----------
+   Salen del sitio donde vive lo que han movido: la primera vez que publicas
+   descubres, sin leer nada, que publicar es una cosa que le pasa al alcance. */
+
+.recurso__flotantes {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  display: grid;
+  justify-items: start;
+  pointer-events: none;
+}
+
+.flotante {
+  font-family: var(--font-data);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 0 8px var(--c-bg);
+  animation: flotar 1.6s ease-out forwards;
+}
+
+/* Sin animacion, el flotante se quedaria congelado en el fotograma final del
+   keyframe —opacity 0— y seria invisible justo para quien no puede verlo
+   moverse. Aqui el numero simplemente aparece y se queda hasta que el store
+   lo retira. */
+@media (prefers-reduced-motion: reduce) {
+  .flotante {
+    animation: none !important;
+    opacity: 1;
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes flotar {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+}
+
+/* ---------- Que esta haciendo ahora mismo ---------- */
+
+.estado {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--c-bgRaised);
+  border-left: 3px solid var(--c-borderStrong);
+  min-width: 0;
+}
+
+.estado[data-clase="directo"] {
+  border-left-color: var(--c-live);
+}
+
+.estado[data-clase="trabajo"] {
+  border-left-color: var(--c-accent);
+}
+
+.estado[data-clase="gente"] {
+  border-left-color: var(--c-comunidad);
+}
+
+.estado[data-clase="vida"] {
+  border-left-color: var(--c-vida);
+}
+
+.estado__linea {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.estado__punto {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  background: var(--c-textDim);
+}
+
+.estado__punto[data-clase="directo"] {
+  background: var(--c-live);
+  animation: latido-punto 1.6s ease-in-out infinite;
+}
+
+.estado__punto[data-clase="trabajo"] {
+  background: var(--c-accent);
+}
+
+.estado__punto[data-clase="gente"] {
+  background: var(--c-comunidad);
+}
+
+.estado__punto[data-clase="vida"] {
+  background: var(--c-vida);
+}
+
+@keyframes latido-punto {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.estado__titulo {
+  font-size: var(--pixel-s);
+  color: var(--c-textBright);
+}
+
+.estado__detalle {
+  font-size: 13px;
+  color: var(--c-textMuted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hilo de la franja en curso: cuatro segundos de vida, pero suficientes para
+   que la tarjeta no parezca una imagen fija. */
+.estado__franja {
+  display: block;
+  height: 2px;
+  margin-top: 2px;
+  background: var(--c-border);
+}
+
+.estado__franja > span {
+  display: block;
+  height: 100%;
+  background: var(--c-borderStrong);
+}
+
+/* ---------- El rotulo de las acciones ----------
+   La izquierda de la barra es estado; la derecha, decisiones. */
+
+.controles__rotulo {
+  align-self: center;
+  font-size: var(--pixel-s);
+  color: var(--c-textDim);
+  letter-spacing: 1px;
+}
+
+.controles__derecha {
+  align-items: center;
+}
+
+/* Publicar es LA accion del juego y tiene que pesar como tal. */
+.publicar__nivel {
+  border-color: var(--c-accent);
+}
+
+.publicar__nivel:not(:disabled) {
+  color: var(--c-textBright);
+}
+
+/* ==========================================================================
+   PARAR — el aviso trae la decision puesta
+   ========================================================================== */
+
+.parar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-bgRaised);
+  border-left: 3px solid var(--c-warning);
+}
+
+.parar[data-nivel="saturado"],
+.parar[data-nivel="critico"] {
+  border-left-color: var(--c-fatiga);
+}
+
+.parar__texto {
+  min-width: 240px;
+  flex: 1 1 320px;
+}
+
+.parar__titulo {
+  display: block;
+  font-size: var(--pixel-s);
+  color: var(--c-textBright);
+}
+
+.parar__mensaje {
+  margin: var(--space-1) 0 var(--space-2);
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+.parar__trato {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-textMuted);
+}
+
+.parar__accion {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: end;
+}
+
+.parar__fatiga {
+  font-size: 13px;
+  color: var(--c-fatiga);
+}
+
+.parar__boton {
+  border-color: var(--c-vida);
+  color: var(--c-vida);
+  padding: var(--space-3) var(--space-4);
+}
+
+.parar__boton:hover:not(:disabled) {
+  background: var(--c-vida);
+  color: var(--c-bg);
+}
+
+/* ==========================================================================
+   LA IRRUPCION — cuando pasa algo, que se note que ha pasado algo
+   ========================================================================== */
+
+.modal--irrupcion {
+  background: color-mix(in srgb, var(--c-bg) 94%, transparent);
+}
+
+.irrupcion {
+  width: min(560px, 92vw);
+  padding: var(--space-6);
+  background: var(--c-bgPanel);
+  border: 2px solid var(--c-hype);
+  box-shadow: 0 0 60px var(--c-glowAlt);
+  text-align: center;
+  animation: irrumpir 0.45s ease-out;
+}
+
+@keyframes irrumpir {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.irrupcion__cinta {
+  display: block;
+  padding: var(--space-2);
+  margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-4);
+  background: var(--c-hype);
+  color: var(--c-bg);
+  font-size: var(--pixel-s);
+  letter-spacing: 2px;
+}
+
+.irrupcion__nombre {
+  margin: 0;
+  font-size: var(--pixel-l);
+  line-height: 1.2;
+  color: var(--c-textBright);
+}
+
+.irrupcion__fase {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--c-hype);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.irrupcion__texto {
+  margin: var(--space-3) 0 var(--space-4);
+  font-size: 14px;
+  color: var(--c-text);
+  text-align: left;
+}
+
+/* Los efectos con su numero: este juego ensena sus formulas desde F1 y
+   cambiar de criterio en la pantalla mas espectacular seria decirle al
+   jugador que aqui las cifras no se miran. */
+.irrupcion__efectos {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  background: var(--c-bgRaised);
+  text-align: left;
+}
+
+.irrupcion__efecto {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 13px;
+}
+
+.irrupcion__efecto-nombre {
+  color: var(--c-textMuted);
+}
+
+.irrupcion__efecto-valor {
+  color: var(--c-textBright);
+  font-size: 15px;
+}
+
+.irrupcion__efecto[data-signo="bueno"] .irrupcion__efecto-valor {
+  color: var(--c-positive);
+}
+
+.irrupcion__efecto[data-signo="malo"] .irrupcion__efecto-valor {
+  color: var(--c-negative);
+}
+
+.irrupcion__efecto[data-signo="nulo"] .irrupcion__efecto-valor {
+  color: var(--c-textDim);
+  font-style: italic;
+}
+
+.irrupcion__meta {
+  margin: 0 0 var(--space-4);
+  font-size: 13px;
+  color: var(--c-textDim);
+}
+
+.irrupcion__acciones {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.irrupcion__boton {
+  padding: var(--space-3) var(--space-6);
+}
+
+.irrupcion__boton--preparar {
+  border-color: var(--c-ingresos);
+  color: var(--c-ingresos);
+}
+
+.irrupcion__boton--preparar:hover:not(:disabled) {
+  background: var(--c-ingresos);
+  color: var(--c-bg);
+}
+
+.irrupcion__nota {
+  margin: var(--space-3) 0 0;
+  font-size: 13px;
+  color: var(--c-textMuted);
+}
+
+/* ==========================================================================
+   EN QUE SE TE VA EL TIEMPO
+   ========================================================================== */
+
+.reparto-semanal {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--c-bgRaised);
+}
+
+.reparto-semanal__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.reparto-semanal__fila {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.reparto-semanal__fila[data-vacia="true"] {
+  opacity: 0.4;
+}
+
+.reparto-semanal__nombre {
+  font-size: var(--pixel-s);
+  color: var(--c-textMuted);
+}
+
+.reparto-semanal__pista {
+  display: block;
+  height: 10px;
+  background: var(--c-border);
+}
+
+.reparto-semanal__relleno {
+  display: block;
+  height: 100%;
+  transition: width 0.2s ease-out;
+  background: var(--c-borderStrong);
+}
+
+/* Los mismos colores que la rejilla del planificador: si una franja de emitir
+   es de este color arriba, tiene que serlo aqui abajo. */
+.reparto-semanal__relleno[data-bloque="emitir"] {
+  background: var(--c-alcance);
+}
+
+.reparto-semanal__relleno[data-bloque="editar"] {
+  background: var(--c-accent);
+}
+
+.reparto-semanal__relleno[data-bloque="comunidad"] {
+  background: var(--c-comunidad);
+}
+
+.reparto-semanal__relleno[data-bloque="leer"] {
+  background: var(--c-ideas);
+}
+
+.reparto-semanal__relleno[data-bloque="vida"] {
+  background: var(--c-vida);
+}
+
+.reparto-semanal__relleno[data-bloque="dormir"] {
+  background: var(--c-borderStrong);
+}
+
+.reparto-semanal__cuenta {
+  font-size: 12px;
+  color: var(--c-textBright);
+  text-align: right;
+}
+
+.reparto-semanal__pie {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-textDim);
+}
+
+/* ==========================================================================
+   EL BALANCE DE LA SEMANA
+   ========================================================================== */
+
+.balance {
+  padding: var(--space-4);
+  background: var(--c-bgPanel);
+  border-left: 3px solid var(--c-accent);
+}
+
+.balance__cabecera {
+  margin-bottom: var(--space-4);
+}
+
+.balance__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.balance__cifras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-3);
+}
+
+.balance__cifra {
+  display: grid;
+  gap: 2px;
+}
+
+.balance__etiqueta {
+  font-family: var(--font-pixel);
+  font-size: var(--pixel-s);
+  text-transform: uppercase;
+}
+
+.balance__valor {
+  font-size: 15px;
+  color: var(--c-textDim);
+}
+
+.balance__cifra[data-signo="sube"] .balance__valor {
+  color: var(--c-positive);
+}
+
+.balance__cifra[data-signo="baja"] .balance__valor {
+  color: var(--c-negative);
+}
+
+/* ==========================================================================
+   EL REGISTRO
+   ========================================================================== */
+
+.registro {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-bgPanel);
+}
+
+.registro__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.registro__entrada {
+  display: grid;
+  grid-template-columns: 32px 16px minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 12px;
+  color: var(--c-text);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.registro__entrada:last-child {
+  border-bottom: none;
+}
+
+.registro__semana {
+  color: var(--c-textDim);
+  font-size: 13px;
+}
+
+.registro__texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.registro__vacio {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-textDim);
+}
+
+/* ==========================================================================
+   MOVIL — la barra de pantallas se va abajo, donde llega el pulgar
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .marcador {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .marcador__recursos {
+    /* Dos filas de dos antes que cuatro columnas ilegibles. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .balance__cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  /* La barra de pantallas pasa a ser la barra de abajo del movil: siempre
+     accesible sin volver arriba, y con las siete —o las que haya
+     desbloqueadas— repartidas a lo ancho en vez de apiladas en dos filas. */
+  .pestanas {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* `left`+`right` no basta: con siete hijos que no caben, la barra se
+       estira hasta su ancho de contenido y arrastra scroll horizontal a toda
+       la pagina. Fijado el ancho, los botones si tienen que repartirse lo que
+       hay. */
+    width: 100%;
+    max-width: 100vw;
+    z-index: 20;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    gap: 0;
+    background: var(--c-bgPanel);
+    border-top: 1px solid var(--c-borderStrong);
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .pestanas__boton {
+    flex: 1 1 0;
+    min-width: 0;
+    /* Siete etiquetas en 375 px salen a 53: sin apretar la caja, la mas larga
+       se corta con puntos suspensivos justo donde hay que leerla. */
+    letter-spacing: 0;
+    padding: var(--space-3) 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pestanas__boton[data-activa="true"] {
+    margin-bottom: 0;
+    padding-bottom: var(--space-3);
+    background: var(--c-bgRaised);
+    border-color: transparent;
+    border-top: 2px solid var(--c-accent);
+  }
+
+  .pestanas__punto {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    margin-left: 0;
+  }
+
+  /* Hueco para que la barra fija no tape el final de la pantalla. */
+  .pantalla {
+    padding-bottom: 72px;
+  }
+
+  .parar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* En columna, `flex-basis` deja de medir ancho y pasa a medir ALTO: la
+     base de 320 px pensada para la fila estiraba el bloque de texto a media
+     pantalla de movil con cien pixeles de contenido dentro. */
+  .parar__texto {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .parar__accion {
+    justify-items: stretch;
+  }
 }

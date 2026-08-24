@@ -22,7 +22,7 @@ No se puede perder. Lo que cambia es cómo llegas.
 
 ```bash
 npm run dev       # servidor de desarrollo
-npm test          # 389 tests: fórmulas, invariantes, determinismo, balance
+npm test          # 411 tests: fórmulas, invariantes, determinismo, balance, HUD
 npm run balance   # banco de balance: nueve políticas juegan la partida entera
 npm run build     # type-check + bundle de producción
 npm run lint
@@ -33,6 +33,10 @@ npm run lint
 **El motor no sabe que existe React.** Todo lo que decide el juego vive en `src/sim/` como TypeScript puro, determinista y sin efectos: `step(state, dt)` devuelve un estado nuevo y nada más. De ahí salen dos cosas que importan mucho: un bug se reproduce desde una semilla, y el banco de balance puede jugar dos horas de partida en un segundo sin abrir un navegador.
 
 **La interfaz es el reproductor.** No hay una pantalla de incremental con barras: la partida ocurre dentro de la interfaz que el jugador ya reconoce. El contador de espectadores **es** el alcance, el chat **es** la comunidad, y el botón Clip **es** el momento clippeable.
+
+**El marcador va dentro del reproductor.** Las cuatro cifras que contestan «cómo voy» —alcance, comunidad, calidad y vida— viven pegadas a la barra de controles, con su ritmo por segundo al lado y con la fatiga debajo de la calidad, que es lo que la explica. No pueden ir debajo del reproductor: el reproductor mide una pantalla entera, así que lo que se coloca después nace fuera de vista. Las otras diez cifras siguen enteras, con sus fórmulas, en la pantalla de Canal.
+
+**Lo que cuenta la partida no se guarda con ella.** El registro de actividad, el balance de cada semana y los números que salen flotando al publicar se derivan de comparar dos estados consecutivos, en `src/hud/`. El motor no sabe que existen: ni un campo nuevo en `GameState`, ni una versión de guardado, ni una línea del banco de balance que se mueva. Lo comprueba `tests/hud.test.ts`.
 
 **Una moneda por categoría.** Nada sale gratis, y lo que cuesta cada cosa dice qué clase de cosa es: el equipo y la casa se compran con **dinero**, montarse el flujo de trabajo cuesta **material** —horas de edición, o sea vídeos que este mes no salen—, cambiar de rutina cuesta **vida** —y no se puede reorganizar nada estando hecho polvo—, y un formato nuevo cuesta **ideas**. Lo hace cumplir `tests/shop.test.ts`.
 
@@ -45,6 +49,7 @@ npm run lint
 | `src/sim/semana.ts` | La semana por franjas: el planificador, el one-hot y el plan automático |
 | `src/sim/patrocinios.ts` | Ofertas, contratos, modas y resacas. Con PRNG propio, a propósito |
 | `src/ui/Pestanas.tsx` | Las siete pantallas. El reproductor se queda fijo arriba y debajo va una cada vez |
+| `src/hud/` | Registro, balance semanal, ritmos y flotantes: interfaz **derivada**, fuera de la partida |
 | `src/content/` | Mejoras, formatos, ciclos, casas, libros, 52 tarjetas de vida, 26 marcas, textos del final |
 | `src/ui/theme/palette.ts` | El único sitio del proyecto donde puede aparecer un color hexadecimal |
 | `tools/balance/` | Bots y arnés de balance |
@@ -87,7 +92,7 @@ El esquema está en [`docs/supabase.sql`](docs/supabase.sql). Copia `.env.exampl
 
 ## Estado
 
-Fases F0 a F8 completadas: motor, bucle, formatos, ciclos, eventos, la semana por franjas, patrocinadores, final y balance calibrado. Queda publicar.
+Fases F0 a F8 completadas: motor, bucle, formatos, ciclos, eventos, la semana por franjas, patrocinadores, final y balance calibrado. Encima va una pasada de interfaz: marcador permanente, separación entre lo que pasa solo y lo que decides tú, irrupción a pantalla completa de los momentos extraordinarios, reparto de la semana en barras, balance al cerrarla, registro de actividad, números flotantes, barra de pantallas abajo en móvil, salida siempre a mano en la cabecera y una escala tipográfica que se puede leer —ningún texto por debajo de 12 px—. Queda publicar.
 
 El pixel art es **provisional**: la escena está construida con capas de CSS a la espera de los lotes descritos en [`docs/brief-arte.md`](docs/brief-arte.md). Cada objeto es su propia capa para poder sustituirlo por su sprite sin tocar nada más.
 

@@ -10,6 +10,7 @@ import {
   type BloqueId,
 } from '../../sim/semana.ts'
 import { TUNABLES } from '../../sim/tunables.ts'
+import { RepartoSemanal } from '../hud/RepartoSemanal.tsx'
 import { useGame } from '../../store.ts'
 
 /**
@@ -109,6 +110,19 @@ export function Planificador() {
           />
         ))}
       </div>
+
+      {/* LA MISMA SEMANA, CONTADA DE LA OTRA FORMA.
+
+          La rejilla dice DONDE cae cada franja, que es lo que hace falta para
+          colocarlas. Pero la pregunta que decide la partida no es donde, es
+          CUANTO: ocho franjas de emitir contra cuatro de emitir, dos de leer y
+          dos de dormir. Con las barras al lado, el jugador ve las dos lecturas
+          a la vez y puede descubrir solo lo que el juego lleva queriendo
+          decirle desde el principio. */}
+      <RepartoSemanal
+        bloques={semana.bloques}
+        titulo={planificando ? 'Esta semana se te irá en' : 'Se te está yendo en'}
+      />
 
       {planificando && (
         <button className="planificador__vivir" onClick={vivirSemana}>

@@ -17,7 +17,7 @@ export function DevPanel() {
 
   return (
     <div className="panel" style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-      <span className="pixel" style={{ fontSize: 'var(--px-8)', color: 'var(--c-textDim)' }}>
+      <span className="pixel" style={{ fontSize: 'var(--pixel-s)', color: 'var(--c-textDim)' }}>
         dev
       </span>
       {SPEEDS.map((s) => (

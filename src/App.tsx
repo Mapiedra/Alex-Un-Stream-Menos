@@ -1,5 +1,5 @@
 import { GameLoop } from './ui/GameLoop.tsx'
-import { Pestanas, type PantallaId } from './ui/Pestanas.tsx'
+import { PANTALLAS, Pestanas, type PantallaId } from './ui/Pestanas.tsx'
 import { DevPanel } from './ui/debug/DevPanel.tsx'
 import { PlayerHeader } from './ui/player/PlayerHeader.tsx'
 import { Stage } from './ui/player/Stage.tsx'
@@ -18,12 +18,17 @@ import { Final } from './ui/panels/Final.tsx'
 import { Ciclo } from './ui/panels/Ciclo.tsx'
 import { Resaca } from './ui/panels/Resaca.tsx'
 import { Ayuda } from './ui/panels/Ayuda.tsx'
+import { Marcador } from './ui/hud/Marcador.tsx'
+import { Irrupcion } from './ui/hud/Irrupcion.tsx'
+import { LlamadaParar } from './ui/hud/LlamadaParar.tsx'
+import { Balance } from './ui/hud/Balance.tsx'
+import { Registro } from './ui/hud/Registro.tsx'
 import { Opciones } from './ui/panels/Opciones.tsx'
 import { Menu } from './ui/menu/Menu.tsx'
 import { Analytics } from '@vercel/analytics/react'
 import { useTelemetria } from './telemetria/usar.ts'
 import { Sparkline } from './ui/components/Sparkline.tsx'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
 import { houseLivingCost } from './sim/state.ts'
@@ -114,6 +119,28 @@ function Partida() {
   // hay gente mirando y se apaga cuando no.
   const intensidad = Math.min(1, g.alcance / 8000)
   const fatiga = nivelFatiga(g.fatiga)
+
+  /**
+   * Las pantallas que existen para este jugador.
+   *
+   * Marcas es la unica que se gana: hasta que alguien te escribe, la pantalla
+   * es un panel vacio explicando un sistema que todavia no te ha pasado. El
+   * resto estan desde el principio porque desde el principio tienen dentro
+   * algo que hacer — incluida Vida, que es donde vive el boton de parar y ese
+   * no se esconde nunca.
+   *
+   * Se mira `aceptadosPorCategoria` ademas de las ofertas vivas para que la
+   * pestana no desaparezca cuando caduque la ultima: lo que se ha desbloqueado
+   * no se vuelve a bloquear.
+   */
+  const hayMarcas =
+    g.ofertas.length > 0 ||
+    g.contratos.length > 0 ||
+    Object.keys(g.aceptadosPorCategoria).length > 0
+  const disponibles = useMemo(
+    () => PANTALLAS.map((p) => p.id).filter((id) => id !== 'marcas' || hayMarcas),
+    [hayMarcas],
+  )
   // El titulo del directo lo pone el formato: la cabecera dice en todo momento
   // que esta haciendo el creador.
   const formato = CONTENT_POR_ID.get(g.formato)
@@ -143,6 +170,7 @@ function Partida() {
             titulo={tituloDirecto}
             espectadores={g.alcance}
             enDirecto={emitiendo}
+            onSalir={volverAlMenu}
           />
 
           <Stage
@@ -168,17 +196,26 @@ function Partida() {
             onClip={catchClip}
             onPublicar={publish}
           />
+
+          {/* Las cuatro cifras que contestan "como voy", dentro del
+              reproductor y no debajo: el bloque de arriba ocupa la pantalla
+              entera, asi que cualquier cosa colocada despues nace fuera de
+              vista y hay que ir a buscarla. */}
+          <Marcador />
         </div>
 
         <ChatPanel mensajes={g.chat} suscriptores={g.comunidad} />
       </div>
 
       {avisoCarga && <p className="aviso aviso--error">{avisoCarga}</p>}
-      {fatiga !== 'ok' && <p className="aviso" data-nivel={fatiga}>{AVISO_FATIGA[fatiga]}</p>}
+
+      {/* El aviso de fatiga ya no solo avisa: trae la decision puesta. */}
+      <LlamadaParar />
 
       <Pestanas
         activa={pantalla}
         onCambiar={setPantalla}
+        disponibles={disponibles}
         avisos={{
           semana: planificando,
           carrera: puedeRetirarse(g),
@@ -186,12 +223,22 @@ function Partida() {
           // oferta que caduca esta semana. Con ofertas constantes, un aviso
           // siempre encendido no significaria nada.
           marcas: g.ofertas.some((o) => o.caducaSemana - g.week <= 1),
-          vida: Boolean(g.evento && !g.evento.preparado),
+          // Vida reclama atencion cuando hay algo que decidir ahi: parar, o
+          // prepararse para lo que viene.
+          vida: fatiga !== 'ok' || Boolean(g.evento && !g.evento.preparado),
         }}
       />
 
       <div className="pantalla" data-pantalla={pantalla}>
-        {pantalla === 'semana' && <Planificador />}
+        {pantalla === 'semana' && (
+          <>
+            {/* El cierre de la anterior, justo encima del reparto de la
+                siguiente: es el unico momento en que sirve de algo. */}
+            <Balance />
+            <Planificador />
+            <Registro />
+          </>
+        )}
 
         {pantalla === 'canal' && (
           <>
@@ -258,6 +305,9 @@ function Partida() {
           la build de desarrollo no tiene por que estar al alcance de nadie. */}
       {import.meta.env.DEV && <DevPanel />}
 
+      {/* Cuando pasa algo grande, se para el reloj y se rompe la pantalla. */}
+      <Irrupcion />
+
       <TarjetaVida />
 
       <Ciclo />
@@ -269,17 +319,6 @@ function Partida() {
       <Analytics />
     </div>
   )
-}
-
-/**
- * El aviso llega ANTES de la penalizacion. El GDD (6.5) pide que forzar tenga
- * consecuencias, no que te pillen por sorpresa: el jugador debe poder decidir
- * parar, no enterarse de que era tarde.
- */
-const AVISO_FATIGA: Record<'aviso' | 'saturado' | 'critico', string> = {
-  aviso: 'Llevas demasiadas horas seguidas. La calidad empieza a resentirse.',
-  saturado: 'Estas al limite. Si sigues asi, vas a tener que parar en seco.',
-  critico: 'No puedes seguir. Necesitas descansar de verdad.',
 }
 
 interface StatProps {

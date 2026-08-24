@@ -5,10 +5,21 @@
   --font-pixel: 'Silkscreen', 'Courier New', monospace;
   --font-data: system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* La fuente de pixeles solo se usa en multiplos exactos de su base. */
-  --px-8: 8px;
-  --px-16: 16px;
-  --px-24: 24px;
+  /* ESCALA DE LA CAPA DIEGETICA.
+
+     Tres tamanos en proporcion 1:2:3, para que una fuente de bitmap caiga
+     siempre en multiplos exactos de su base y no se interpole.
+
+     La base era 8 px y se ha subido a 12. Dos motivos: a 8 px las etiquetas
+     no se leen —y media interfaz de este juego son etiquetas cortas: los dias
+     de la rejilla, las franjas, los nombres de bloque, las pestanas—, y
+     ademas la Silkscreen que da nombre a la escala NO esta cargada en el
+     proyecto, asi que todo esto se dibuja con la Courier de sistema, que a
+     8 px es directamente ilegible. Mientras esa fuente no exista, la escala
+     tiene que ser legible con la de repuesto. */
+  --pixel-s: 12px;
+  --pixel-m: 24px;
+  --pixel-l: 36px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -69,7 +80,7 @@ body {
 
 button {
   font-family: var(--font-pixel);
-  font-size: var(--px-8);
+  font-size: var(--pixel-s);
   text-transform: uppercase;
   background: var(--c-bgRaised);
   color: var(--c-textBright);
