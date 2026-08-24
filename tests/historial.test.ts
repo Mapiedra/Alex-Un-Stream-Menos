@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { lanzarSemana } from '../src/sim/semana.ts'
+import { replanificar } from '../src/sim/shop.ts'
 import {
   INTERVALO_S,
   MUESTRAS,
@@ -24,7 +26,10 @@ function avanzar(s: GameState, ticks: number): GameState {
   let actual = s
   for (let i = 0; i < ticks; i++) {
     if (actual.eventoPendiente) actual = resolver(actual, actual.eventoPendiente, 0)
-    actual = step(actual, TUNABLES.tickMs)
+    // Al acabarse la semana la partida se para a esperar el reparto de la
+    // siguiente. Aqui se relanza con el mismo plan: el test mide las curvas,
+    // no la pausa.
+    actual = step(lanzarSemana(actual), TUNABLES.tickMs)
   }
   return actual
 }
@@ -112,7 +117,7 @@ describe('la tesis del juego, medida en las curvas', () => {
      */
     let s = cambiarFormato(createInitialState(11), 'popular')
     // Fase 1: producir a tope hasta tener alcance y algo de comunidad.
-    s = { ...s, allocation: { produccion: 0.8, comunidad: 0.2, vida: 0, descanso: 0 } }
+    s = replanificar(s, { produccion: 0.8, comunidad: 0.2, vida: 0, descanso: 0 })
     s = avanzar(s, 4000)
 
     const alcancePico = s.alcance
@@ -121,7 +126,7 @@ describe('la tesis del juego, medida en las curvas', () => {
     expect(comunidadPico).toBeGreaterThan(0)
 
     // Fase 2: parar del todo.
-    s = { ...s, allocation: { produccion: 0, comunidad: 0, vida: 0.5, descanso: 0.5 } }
+    s = replanificar(s, { produccion: 0, comunidad: 0, vida: 0.5, descanso: 0.5 })
     s = avanzar(s, 3000)
 
     const caidaAlcance = 1 - s.alcance / alcancePico

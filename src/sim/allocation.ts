@@ -1,4 +1,4 @@
-import { UPGRADES_POR_ID, type Upgrade } from '../content/upgrades.ts'
+import { UPGRADES_POR_ID, VIDA_MINIMA_PARA_RUTINA, type Upgrade } from '../content/upgrades.ts'
 import { normalizeAllocation, type Allocation } from './state.ts'
 
 /**
@@ -78,7 +78,14 @@ export function costeSiguiente(up: Upgrade, niveles: number): number {
   return Math.ceil(up.coste * Math.pow(up.escala, niveles))
 }
 
-export type MotivoBloqueo = 'agotada' | 'ciclo' | 'dinero' | 'ideas' | null
+export type MotivoBloqueo =
+  | 'agotada'
+  | 'ciclo'
+  | 'dinero'
+  | 'ideas'
+  | 'material'
+  | 'vida'
+  | null
 
 export interface Disponibilidad {
   visible: boolean
@@ -86,26 +93,69 @@ export interface Disponibilidad {
   motivo: MotivoBloqueo
   coste: number
   costeIdeas: number
+  costeMaterial: number
+  costeVida: number
 }
 
-/** Se puede comprar? Y si no, por que. La UI necesita saber ambas cosas. */
+/** Lo que hay que tener para comprar algo. */
+export interface Bolsillo {
+  ahorros: number
+  ideas: number
+  material: number
+  vida: number
+}
+
+/**
+ * Se puede comprar? Y si no, por que. La UI necesita saber ambas cosas.
+ *
+ * Los cuatro costes se comprueban en el mismo orden en que la tienda los
+ * cuenta, para que el motivo que se enseña sea siempre el primero que falla.
+ */
 export function disponibilidad(
   up: Upgrade,
   owned: Owned,
   ciclo: number,
-  ahorros: number,
-  ideas: number,
+  bolsillo: Bolsillo,
 ): Disponibilidad {
   const niveles = owned[up.id] ?? 0
   const coste = costeSiguiente(up, niveles)
   const costeIdeas = up.costeIdeas ?? 0
+  const costeMaterial = up.costeMaterial ?? 0
+  const costeVida = up.costeVida ?? 0
   const visible = ciclo >= (up.desdeCiclo ?? 1)
 
   let motivo: MotivoBloqueo = null
   if (niveles >= up.maximo) motivo = 'agotada'
   else if (!visible) motivo = 'ciclo'
-  else if (ahorros < coste) motivo = 'dinero'
-  else if (ideas < costeIdeas) motivo = 'ideas'
+  else if (bolsillo.ahorros < coste) motivo = 'dinero'
+  else if (bolsillo.ideas < costeIdeas) motivo = 'ideas'
+  else if (bolsillo.material < costeMaterial) motivo = 'material'
+  // No se puede reorganizar la vida estando hecho polvo: el suelo no es un
+  // capricho, es la mitad de lo que quiere decir la categoria.
+  else if (costeVida > 0 && bolsillo.vida - costeVida < VIDA_MINIMA_PARA_RUTINA) motivo = 'vida'
 
-  return { visible, comprable: motivo === null, motivo, coste, costeIdeas }
+  return {
+    visible,
+    comprable: motivo === null,
+    motivo,
+    coste,
+    costeIdeas,
+    costeMaterial,
+    costeVida,
+  }
+}
+
+/** El bolsillo de una partida, para no repetir el mismo objeto en cada sitio. */
+export function bolsilloDe(state: {
+  ahorros: number
+  ideas: number
+  material: number
+  vida: number
+}): Bolsillo {
+  return {
+    ahorros: state.ahorros,
+    ideas: state.ideas,
+    material: state.material,
+    vida: state.vida,
+  }
 }

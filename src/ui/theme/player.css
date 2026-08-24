@@ -1339,3 +1339,603 @@
   font-size: 11px;
   color: var(--c-textDim);
 }
+
+/* ---------- Menu de inicio ----------
+   Es el reproductor apagado: mismo marco y mismo ancho, sin directo. El juego
+   no cambia de piel para enseñar un menu. */
+
+.menu {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.menu__marco {
+  width: 100%;
+  max-width: 720px;
+  display: grid;
+  gap: var(--space-6);
+}
+
+.menu__cabecera {
+  display: grid;
+  gap: var(--space-3);
+  border-left: 2px solid var(--c-accent);
+  padding-left: var(--space-4);
+}
+
+.menu__kicker {
+  font-size: var(--px-8);
+  color: var(--c-textDim);
+}
+
+.menu__titulo {
+  margin: 0;
+  font-size: var(--px-24);
+  color: var(--c-textBright);
+  line-height: 1.3;
+}
+
+.menu__pitch {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--c-textMuted);
+}
+
+.menu__opciones {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 420px;
+}
+
+.menu__boton {
+  display: grid;
+  gap: var(--space-1);
+  text-align: left;
+  font-family: var(--font-data);
+  font-size: 13px;
+  text-transform: none;
+  padding: var(--space-3);
+}
+
+.menu__boton--principal {
+  border-color: var(--c-accent);
+  color: var(--c-textBright);
+}
+
+.menu__boton--peligro {
+  border-color: var(--c-negative);
+  color: var(--c-negative);
+}
+
+.menu__boton-nota {
+  font-size: 11px;
+  color: var(--c-textDim);
+}
+
+.menu__aviso {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-warning);
+}
+
+/* Barra de salida de la partida: guardar, salir, consultar las reglas. */
+.barra-partida {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* ---------- Ayuda ---------- */
+
+.ayuda {
+  display: grid;
+  gap: var(--space-4);
+  background: var(--c-bgPanel);
+  border: 1px solid var(--c-border);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.ayuda__titulo {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: var(--px-16);
+  color: var(--c-textBright);
+  text-transform: uppercase;
+}
+
+.ayuda__bloque {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ayuda__bloque p {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--c-textMuted);
+}
+
+.ayuda__seccion {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: var(--px-8);
+  color: var(--c-accent);
+  text-transform: uppercase;
+}
+
+.ayuda__lista,
+.ayuda__ciclos {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  color: var(--c-textMuted);
+  max-width: 70ch;
+}
+
+.ayuda__lista strong {
+  color: var(--c-text);
+}
+
+.ayuda__glosario {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ayuda__termino {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.ayuda__termino dt {
+  font-family: var(--font-pixel);
+  font-size: var(--px-8);
+  text-transform: uppercase;
+}
+
+.ayuda__termino dd {
+  margin: 0;
+  color: var(--c-textMuted);
+}
+
+.ayuda__ciclos li {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ayuda__ciclo-nombre {
+  color: var(--c-text);
+}
+
+.ayuda__ciclo-objetivo {
+  color: var(--c-textDim);
+}
+
+@media (max-width: 560px) {
+  .ayuda__termino {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
+
+/* ---------- Entrada de ciclo ---------- */
+
+.tarjeta--ciclo {
+  max-width: 520px;
+}
+
+.ciclo__objetivo {
+  display: grid;
+  gap: var(--space-2);
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--space-3);
+}
+
+/* ---------- Planificador de la semana ----------
+   La rejilla es 8 columnas: la etiqueta de la franja mas los siete dias.
+   Cada bloque toma su color de un token que ya existe, para que la semana se
+   lea de un vistazo sin tener que descifrar la leyenda. */
+
+.planificador {
+  display: grid;
+  gap: var(--space-4);
+  background: var(--c-bgPanel);
+  border: 1px solid var(--c-border);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.planificador[data-fase="planificando"] {
+  border-color: var(--c-accent);
+}
+
+.planificador__cabecera {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.paleta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.paleta__pincel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: none;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--bloque, var(--c-border));
+}
+
+.paleta__pincel[data-activo="true"] {
+  background: var(--c-bgRaised);
+  color: var(--c-textBright);
+  border-color: var(--bloque, var(--c-accent));
+}
+
+.paleta__cuenta {
+  color: var(--c-textDim);
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: auto repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  touch-action: none;
+}
+
+.rejilla__esquina {
+  content: '';
+}
+
+.rejilla__dia,
+.rejilla__franja {
+  font-size: var(--px-8);
+  color: var(--c-textDim);
+  align-self: center;
+}
+
+.rejilla__dia {
+  text-align: center;
+}
+
+.rejilla__franja {
+  padding-right: var(--space-2);
+  text-align: right;
+}
+
+.rejilla__celda {
+  min-height: 34px;
+  padding: var(--space-1);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--bloque, var(--c-border));
+  background: var(--c-bg);
+  font-family: var(--font-data);
+  font-size: 10px;
+  text-transform: none;
+  color: var(--c-textMuted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rejilla__celda:disabled {
+  /* Sin reparto manual la rejilla se mira: no es un control roto, es
+     informacion sobre en que se te va la semana. */
+  opacity: 1;
+  cursor: default;
+}
+
+.rejilla__celda[data-encurso="true"] {
+  border-color: var(--c-textBright);
+  border-left-color: var(--bloque, var(--c-accent));
+  color: var(--c-textBright);
+  background: var(--c-bgRaised);
+}
+
+/* Un token de color por bloque. Ninguno es nuevo: todos salen de palette.ts. */
+.rejilla__celda[data-bloque="emitir"],
+.paleta__pincel[data-bloque="emitir"] {
+  --bloque: var(--c-alcance);
+}
+
+.rejilla__celda[data-bloque="editar"],
+.paleta__pincel[data-bloque="editar"] {
+  --bloque: var(--c-ingresos);
+}
+
+.rejilla__celda[data-bloque="comunidad"],
+.paleta__pincel[data-bloque="comunidad"] {
+  --bloque: var(--c-comunidad);
+}
+
+.rejilla__celda[data-bloque="leer"],
+.paleta__pincel[data-bloque="leer"] {
+  --bloque: var(--c-calidad);
+}
+
+.rejilla__celda[data-bloque="vida"],
+.paleta__pincel[data-bloque="vida"] {
+  --bloque: var(--c-vida);
+}
+
+.rejilla__celda[data-bloque="dormir"],
+.paleta__pincel[data-bloque="dormir"] {
+  --bloque: var(--c-ideas);
+}
+
+.planificador__vivir {
+  justify-self: start;
+  font-family: var(--font-data);
+  font-size: 13px;
+  text-transform: none;
+  padding: var(--space-3) var(--space-6);
+  border-color: var(--c-accent);
+  color: var(--c-textBright);
+}
+
+@media (max-width: 620px) {
+  .rejilla__celda {
+    min-height: 28px;
+    font-size: 0;
+  }
+
+  .rejilla__etiqueta {
+    display: none;
+  }
+}
+
+/* ---------- Directo, material y niveles de publicacion ---------- */
+
+.controles__directo {
+  font-family: var(--font-data);
+  font-size: 11px;
+  text-transform: none;
+  padding: var(--space-1) var(--space-3);
+  white-space: nowrap;
+}
+
+.controles__directo[data-endirecto="true"] {
+  border-color: var(--c-live);
+  color: var(--c-live);
+}
+
+.controles__material {
+  color: var(--c-ingresos);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.publicar {
+  display: flex;
+  gap: 2px;
+}
+
+.publicar__nivel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-data);
+  font-size: 11px;
+  text-transform: none;
+  padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
+}
+
+.publicar__nivel[data-nivel="cuidado"]:not(:disabled) {
+  border-color: var(--c-calidad);
+  color: var(--c-calidad);
+}
+
+.publicar__nivel[data-nivel="rapido"]:not(:disabled) {
+  border-color: var(--c-hype);
+  color: var(--c-hype);
+}
+
+.publicar__coste {
+  color: var(--c-textDim);
+  font-size: 10px;
+}
+
+.publicar__nivel:disabled {
+  opacity: 0.4;
+}
+
+/* ---------- La mesilla ---------- */
+
+.lectura {
+  display: grid;
+  gap: var(--space-3);
+  background: var(--c-bgPanel);
+  border: 1px solid var(--c-border);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.lectura__cabecera {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.lectura__barra {
+  height: 6px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+}
+
+.lectura__barra span {
+  display: block;
+  height: 100%;
+  background: var(--c-calidad);
+}
+
+.lectura__coleccion {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.lectura__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lectura__leido {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-calidad);
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+  color: var(--c-textMuted);
+}
+
+.lectura__leido[data-tema="ensayo"] {
+  border-left-color: var(--c-ideas);
+}
+
+.lectura__leido[data-tema="oficio"] {
+  border-left-color: var(--c-ingresos);
+}
+
+.lectura__leido[data-tema="raro"] {
+  border-left-color: var(--c-hype);
+}
+
+.lectura__tema {
+  color: var(--c-textDim);
+  font-size: 10px;
+}
+
+.lectura__sinergias {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.menu__descargo {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--c-textDim);
+  border-left: 1px solid var(--c-border);
+  padding-left: var(--space-3);
+}
+
+.menu__descargo strong {
+  color: var(--c-textMuted);
+}
+
+/* ---------- Pantallas ----------
+   El reproductor se queda arriba y lo de debajo es una pantalla cada vez. */
+
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: var(--space-4);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.pestanas__boton {
+  position: relative;
+  font-family: var(--font-pixel);
+  font-size: var(--px-8);
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  color: var(--c-textDim);
+}
+
+.pestanas__boton:hover {
+  color: var(--c-text);
+}
+
+.pestanas__boton[data-activa="true"] {
+  border-color: var(--c-border);
+  background: var(--c-bgPanel);
+  color: var(--c-textBright);
+  /* Tapa la linea de abajo: la pestaña activa y su pantalla son lo mismo. */
+  margin-bottom: -1px;
+  padding-bottom: calc(var(--space-2) + 1px);
+}
+
+.pestanas__punto {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: var(--space-2);
+  vertical-align: middle;
+  background: var(--c-accent);
+}
+
+.pestanas__boton[data-activa="true"] .pestanas__punto {
+  background: var(--c-live);
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+/* Dentro de una pantalla los paneles ya no necesitan separarse ellos solos:
+   lo hace la rejilla. */
+.pantalla > .planificador,
+.pantalla > .lectura,
+.pantalla > .ayuda,
+.pantalla > .barra-partida {
+  margin-top: 0;
+}
+
+/* ---------- Peldaños de las mejoras ---------- */
+
+.mejora__paso {
+  color: var(--c-accent);
+  font-style: normal;
+}
+
+.mejora__escalera {
+  display: flex;
+  gap: 3px;
+  margin-top: var(--space-1);
+}
+
+.mejora__peldano {
+  width: 18px;
+  height: 4px;
+  background: var(--c-border);
+}
+
+.mejora__peldano[data-hecho="true"] {
+  background: var(--c-accent);
+}
+
+.tienda__moneda {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--c-textDim);
+  border-left: 1px solid var(--c-border);
+  padding-left: var(--space-3);
+}

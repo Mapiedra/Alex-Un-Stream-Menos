@@ -4,7 +4,7 @@ import { publicar, step } from '../../src/sim/tick.ts'
 import { TUNABLES } from '../../src/sim/tunables.ts'
 
 import { siguienteCompra, type Bot } from './bots.ts'
-import { comprar } from '../../src/sim/shop.ts'
+import { comprar, replanificar } from '../../src/sim/shop.ts'
 import { resolver } from '../../src/sim/lifeEvents.ts'
 import { irseDeVacaciones, puedeIrseDeVacaciones } from '../../src/sim/descanso.ts'
 import { prepararEvento } from '../../src/sim/bigEvents.ts'
@@ -96,6 +96,9 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
     // la partida no se quede congelada.
     if (s.eventoPendiente) s = resolver(s, s.eventoPendiente, 0)
 
+    // La entrada de ciclo detiene igual: el bot la da por leida y sigue.
+    if (s.avisoCiclo !== null) s = { ...s, avisoCiclo: null }
+
     // Comprar primero: en los ciclos 1-2 la compra es lo que mueve el reparto.
     if (!bot.compra || bot.compra(s)) {
       const id = siguienteCompra(s, bot.prioridad)
@@ -112,9 +115,19 @@ export function runBot(bot: Bot, opts: { maxMinutes?: number; seed?: number } = 
       s = irseDeVacaciones({ ...s, repartoAntesDeParar: s.allocation })
     }
 
-    // Un reparto manual pisa al derivado; sin el, mandan las compras.
-    // Durante un descanso NO se pisa: parar significa no producir.
-    if (bot.allocation && !s.descanso) s = { ...s, allocation: bot.allocation(s) }
+    /**
+     * Repartir la semana y lanzarla.
+     *
+     * Es lo que hace una persona en la pausa: coloca las franjas y le da a
+     * vivir. Un reparto manual pisa al derivado; sin el, mandan las compras.
+     * Durante un descanso NO se pisa —parar significa no producir— y ademas
+     * esas semanas ni siquiera pasan por la fase de planificar.
+     */
+    if (s.semana.fase === 'planificando') {
+      const alloc = bot.allocation && !s.descanso ? bot.allocation(s) : s.allocation
+      s = replanificar(s, alloc)
+      s = { ...s, semana: { ...s.semana, fase: 'viviendo' } }
+    }
 
     if (bot.publish(s)) s = publicar(s)
     s = step(s, dt)

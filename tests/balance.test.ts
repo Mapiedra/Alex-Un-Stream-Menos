@@ -193,10 +193,15 @@ describe('duracion de la partida', () => {
 
   it('dejar que las compras decidan tus horas tambien llega a buen puerto', () => {
     // El bot "derivado" nunca toca el reparto: juega como el jugador de los
-    // ciclos 1-2, que solo compra. Tarda mas que el equilibrado, pero llega.
+    // ciclos 1-2, que solo compra. Llega igual, aunque no antes.
     // Si dejara de llegar, la primera mitad de la partida seria un callejon.
+    //
+    // La comparacion es >= y no > desde F7: la semana son 21 franjas, asi que
+    // dos repartos parecidos caen en el MISMO plan de bloques y las dos
+    // politicas convergen. Lo que el test protege es que dejar que decidan las
+    // compras llegue a buen puerto y nunca salga mejor que decidir tu.
     expect(derivadoRun.retiroEnMinuto).not.toBeNull()
-    expect(derivadoRun.retiroEnMinuto ?? 0).toBeGreaterThan(equilibrado.retiroEnMinuto ?? 0)
+    expect(derivadoRun.retiroEnMinuto ?? 0).toBeGreaterThanOrEqual(equilibrado.retiroEnMinuto ?? 0)
   })
 
   it('ninguna politica se retira en los primeros veinte minutos', () => {

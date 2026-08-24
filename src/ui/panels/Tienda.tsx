@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import {
+  MONEDA_CATEGORIA,
   NOMBRE_CATEGORIA,
   UPGRADES,
+  escalon,
   type Categoria,
   type Upgrade,
 } from '../../content/upgrades.ts'
-import { disponibilidad, type Disponibilidad } from '../../sim/allocation.ts'
+import { bolsilloDe, disponibilidad, type Disponibilidad } from '../../sim/allocation.ts'
 import { useGame } from '../../store.ts'
 import { eur, fmt } from '../../format.ts'
 
@@ -23,19 +25,20 @@ export function Tienda() {
   const ciclo = useGame((s) => s.game.cycle)
   const ahorros = useGame((s) => s.game.ahorros)
   const ideas = useGame((s) => s.game.ideas)
+  const material = useGame((s) => s.game.material)
+  const vida = useGame((s) => s.game.vida)
   const comprar = useGame((s) => s.buy)
 
   const [categoria, setCategoria] = useState<Categoria>('setup')
 
-  const items = useMemo(
-    () =>
-      UPGRADES.filter((u) => u.categoria === categoria).map((u) => ({
-        up: u,
-        d: disponibilidad(u, owned, ciclo, ahorros, ideas),
-        niveles: owned[u.id] ?? 0,
-      })),
-    [categoria, owned, ciclo, ahorros, ideas],
-  )
+  const items = useMemo(() => {
+    const bolsillo = bolsilloDe({ ahorros, ideas, material, vida })
+    return UPGRADES.filter((u) => u.categoria === categoria).map((u) => ({
+      up: u,
+      d: disponibilidad(u, owned, ciclo, bolsillo),
+      niveles: owned[u.id] ?? 0,
+    }))
+  }, [categoria, owned, ciclo, ahorros, ideas, material, vida])
 
   return (
     <section className="tienda">
@@ -51,9 +54,13 @@ export function Tienda() {
           </button>
         ))}
         <span className="tienda__saldo data">
-          {eur(ahorros)} · {fmt(ideas, 1)} ideas
+          {eur(ahorros)} · {fmt(ideas, 1)} ideas · {material.toFixed(1)} material
         </span>
       </nav>
+
+      {/* Cada categoria cobra en su moneda, y decirlo evita la pregunta de
+          por que una mejora sin precio no se puede comprar. */}
+      <p className="tienda__moneda">{MONEDA_CATEGORIA[categoria]}</p>
 
       <ul className="tienda__lista">
         {items.map(({ up, d, niveles }) => (
@@ -73,32 +80,76 @@ interface FilaProps {
 
 function Fila({ up, d, niveles, onComprar }: FilaProps) {
   const agotada = d.motivo === 'agotada'
+  // El peldaño que TOCA, no el que ya tienes: la tienda enseña hacia donde
+  // vas. Es lo que convierte comprar cuatro veces lo mismo en una progresion.
+  const siguiente = agotada ? null : escalon(up, niveles)
 
   return (
     <li className="mejora" data-agotada={agotada} data-bloqueada={!d.visible}>
       <div className="mejora__texto">
         <span className="mejora__nombre">
           {up.nombre}
-          {up.maximo > 1 && niveles > 0 && <em className="mejora__nivel"> · {niveles}</em>}
+          {siguiente && <em className="mejora__paso"> — {siguiente.nombre}</em>}
+          {up.maximo > 1 && (
+            <em className="mejora__nivel">
+              {' '}
+              · {niveles}/{up.maximo}
+            </em>
+          )}
         </span>
-        <span className="mejora__desc">{up.descripcion}</span>
+        <span className="mejora__desc">{siguiente?.descripcion ?? up.descripcion}</span>
         <span className="mejora__efecto data">{describirEfecto(up)}</span>
+        {up.escalones && up.maximo > 1 && (
+          <span className="mejora__escalera" aria-hidden>
+            {up.escalones.map((e, i) => (
+              <span key={e.nombre} className="mejora__peldano" data-hecho={i < niveles} />
+            ))}
+          </span>
+        )}
       </div>
 
-      <button className="mejora__boton" onClick={onComprar} disabled={!d.comprable}>
+      <button className="mejora__boton" onClick={onComprar} disabled={!d.comprable} title={pista(d)}>
         {etiqueta(d)}
       </button>
     </li>
   )
 }
 
+/** Por que no se puede comprar, en una linea. */
+function pista(d: Disponibilidad): string {
+  switch (d.motivo) {
+    case 'dinero':
+      return 'Te falta dinero.'
+    case 'ideas':
+      return 'Te faltan ideas. Salen de la vida personal y de terminar libros.'
+    case 'material':
+      return 'Te falta material. Sale de las franjas de editar.'
+    case 'vida':
+      return 'Estas demasiado hecho polvo para reorganizarte. Duerme unas semanas primero.'
+    case 'ciclo':
+      return 'Todavia no toca.'
+    default:
+      return ''
+  }
+}
+
+/**
+ * Lo que cuesta, en todas sus monedas.
+ *
+ * Ya no existe "Gratis": si una mejora no vale dinero es porque vale material,
+ * vida o ideas. Decirlo entero es lo que permite comparar lo que inviertes con
+ * lo que te devuelve.
+ */
 function etiqueta(d: Disponibilidad): string {
   if (d.motivo === 'agotada') return 'Hecho'
   if (d.motivo === 'ciclo') return 'Aun no'
-  if (d.costeIdeas > 0 && d.coste === 0) return `${d.costeIdeas} ideas`
-  if (d.costeIdeas > 0) return `${eur(d.coste)} + ${d.costeIdeas} ideas`
-  if (d.coste === 0) return 'Gratis'
-  return eur(d.coste)
+
+  const partes: string[] = []
+  if (d.coste > 0) partes.push(eur(d.coste))
+  if (d.costeIdeas > 0) partes.push(`${d.costeIdeas} ideas`)
+  if (d.costeMaterial > 0) partes.push(`${d.costeMaterial} material`)
+  if (d.costeVida > 0) partes.push(`${Math.round(d.costeVida * 100)}% de vida`)
+  return partes.join(' + ') || 'Sin coste'
 }
 
 /**

@@ -1,6 +1,7 @@
 import { TUNABLES } from './tunables.ts'
 import { clamp01 } from './formulas.ts'
-import type { GameState } from './state.ts'
+import { allocationDelPlan, planAutomatico } from './semana.ts'
+import type { Allocation, GameState } from './state.ts'
 
 /**
  * Vacaciones y burnout: las dos formas de parar.
@@ -39,11 +40,29 @@ export function puedeIrseDeVacaciones(state: GameState): boolean {
 export function irseDeVacaciones(state: GameState): GameState {
   if (!puedeIrseDeVacaciones(state)) return state
   const semanas = TUNABLES.vacaciones.semanas
+  return semanaDeParada(
+    {
+      ...state,
+      descanso: { tipo: 'vacaciones', semanasRestantes: semanas, semanasTotales: semanas },
+    },
+    // El reparto durante el descanso es todo vida y descanso: no se produce.
+    { produccion: 0, comunidad: 0, vida: 0.5, descanso: 0.5 },
+  )
+}
+
+/**
+ * Reescribe la semana en curso con el reparto de una parada.
+ *
+ * Se queda en fase de vivir a proposito: las semanas de parada pasan solas.
+ * Pedirle a alguien que acaba de irse de vacaciones que planifique sus dias
+ * seria exactamente lo contrario de lo que son unas vacaciones.
+ */
+function semanaDeParada(state: GameState, alloc: Allocation): GameState {
+  const bloques = planAutomatico(alloc)
   return {
     ...state,
-    descanso: { tipo: 'vacaciones', semanasRestantes: semanas, semanasTotales: semanas },
-    // El reparto durante el descanso es todo vida y descanso: no se produce.
-    allocation: { produccion: 0, comunidad: 0, vida: 0.5, descanso: 0.5 },
+    semana: { ...state.semana, bloques, fase: 'viviendo' },
+    allocation: allocationDelPlan(bloques),
   }
 }
 
@@ -55,13 +74,15 @@ export function irseDeVacaciones(state: GameState): GameState {
  */
 export function entrarEnBurnout(state: GameState): GameState {
   const { semanas, danoComunidad } = TUNABLES.burnout
-  return {
-    ...state,
-    descanso: { tipo: 'burnout', semanasRestantes: semanas, semanasTotales: semanas },
-    comunidad: state.comunidad * (1 - danoComunidad),
-    allocation: { produccion: 0, comunidad: 0, vida: 0.4, descanso: 0.6 },
-    burnouts: state.burnouts + 1,
-  }
+  return semanaDeParada(
+    {
+      ...state,
+      descanso: { tipo: 'burnout', semanasRestantes: semanas, semanasTotales: semanas },
+      comunidad: state.comunidad * (1 - danoComunidad),
+      burnouts: state.burnouts + 1,
+    },
+    { produccion: 0, comunidad: 0, vida: 0.4, descanso: 0.6 },
+  )
 }
 
 export interface FinDescanso {

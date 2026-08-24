@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialState, normalizeAllocation } from '../src/sim/state.ts'
+import { lanzarSemana } from '../src/sim/semana.ts'
+import { createInitialState, normalizeAllocation, type GameState } from '../src/sim/state.ts'
 import { publicar, step } from '../src/sim/tick.ts'
 import { TUNABLES } from '../src/sim/tunables.ts'
 import { chance, createRng, nextFloat } from '../src/sim/rng.ts'
 
 const run = (ticks: number, seed = 1) => {
   let s = createInitialState(seed)
-  for (let i = 0; i < ticks; i++) s = step(s, TUNABLES.tickMs)
+  // Se relanza la semana en cada paso: el reloj solo corre mientras se vive
+  // lo repartido, y estos tests miden el reloj, no la pausa.
+  for (let i = 0; i < ticks; i++) s = step(lanzarSemana(s), TUNABLES.tickMs)
   return s
 }
 
@@ -87,16 +90,23 @@ describe('el reloj de semanas', () => {
   })
 })
 
+/**
+ * Publicar cuesta material desde F7, y el material sale de editar. Aqui se
+ * rellena a mano porque lo que se mide es el efecto de publicar, no el rato
+ * que cuesta llegar a tener un video montado.
+ */
+const conMaterial = (s: GameState, material = 10): GameState => ({ ...s, material })
+
 describe('publicar', () => {
   it('da un pico de alcance y de hype', () => {
-    const s = run(100)
+    const s = conMaterial(run(100))
     const p = publicar(s)
     expect(p.alcance).toBeGreaterThan(s.alcance)
     expect(p.hype).toBeGreaterThan(s.hype)
   })
 
   it('agrega publicaciones de la misma semana en una sola entrada', () => {
-    let s = run(10)
+    let s = conMaterial(run(10))
     s = publicar(s)
     s = publicar(s)
     expect(s.catalogo).toHaveLength(1)
@@ -104,7 +114,7 @@ describe('publicar', () => {
   })
 
   it('el hype tiene tope: acelera, no sustituye a la estructura', () => {
-    let s = run(10)
+    let s = conMaterial(run(10), 500)
     for (let i = 0; i < 100; i++) s = publicar(s)
     expect(s.hype).toBeLessThanOrEqual(TUNABLES.hype.max)
   })

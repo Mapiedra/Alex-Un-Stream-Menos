@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { lanzarSemana } from '../src/sim/semana.ts'
 import {
   CONTENT_POR_ID,
   CONTENT_TYPES,
@@ -11,7 +12,7 @@ import { TUNABLES } from '../src/sim/tunables.ts'
 
 const jugar = (formato: string, ticks: number, semilla = 1) => {
   let s = cambiarFormato(createInitialState(semilla), formato)
-  for (let i = 0; i < ticks; i++) s = step(s, TUNABLES.tickMs)
+  for (let i = 0; i < ticks; i++) s = step(lanzarSemana(s), TUNABLES.tickMs)
   return s
 }
 
@@ -93,8 +94,8 @@ describe('el formato cambia el resultado del mismo trabajo', () => {
     let a = conCharla
     let b = conPopular
     for (let i = 0; i < 300; i++) {
-      a = step(a, TUNABLES.tickMs)
-      b = step(b, TUNABLES.tickMs)
+      a = step(lanzarSemana(a), TUNABLES.tickMs)
+      b = step(lanzarSemana(b), TUNABLES.tickMs)
     }
     expect(a.comunidad).toBeGreaterThan(b.comunidad)
   })
@@ -105,7 +106,7 @@ describe('el formato cambia el resultado del mismo trabajo', () => {
     const forzando = (formato: string) => {
       let s = cambiarFormato(createInitialState(9), formato)
       s = { ...s, allocation: { produccion: 1, comunidad: 0, vida: 0, descanso: 0 } }
-      for (let i = 0; i < 3000; i++) s = step(s, TUNABLES.tickMs)
+      for (let i = 0; i < 3000; i++) s = step(lanzarSemana(s), TUNABLES.tickMs)
       return s.fatiga
     }
     expect(forzando('cocina')).toBeLessThan(forzando('popular'))
@@ -115,12 +116,22 @@ describe('el formato cambia el resultado del mismo trabajo', () => {
     // Empezar la partida acumulando fatiga sin hacer nada seria un castigo
     // gratuito. La fatiga tiene que ser consecuencia de forzar, no el estado
     // por defecto.
-    expect(jugar('directo', 6000).fatiga).toBe(0)
+    // Desde F7 no es exactamente cero, y la razon es sana: dentro de la
+    // semana las horas ya no estan mezcladas, van seguidas. Emitir cansa un
+    // poco y dormir lo quita, asi que la fatiga hace diente de sierra en lugar
+    // de quedarse clavada en el suelo. Lo que importa sigue siendo verdad: con
+    // el reparto de arranque no se acumula, se recupera cada noche.
+    const diezMinutos = jugar('directo', 6000).fatiga
+    const veinteMinutos = jugar('directo', 12_000).fatiga
+    expect(diezMinutos).toBeLessThan(0.05)
+    expect(veinteMinutos).toBeLessThan(0.05)
   })
 
   it('publicar con un formato de mas calidad deja mas peso en el catalogo', () => {
-    const conClub = publicar(jugar('club', 100))
-    const conPopular = publicar(jugar('popular', 100))
+    // Con material puesto a mano: lo que se mide es el peso que deja cada
+    // formato, no cuanto tarda cada uno en dejar un video montado.
+    const conClub = publicar({ ...jugar('club', 100), material: 10 })
+    const conPopular = publicar({ ...jugar('popular', 100), material: 10 })
     const peso = (s: typeof conClub) => s.catalogo[0]?.weight ?? 0
     expect(peso(conClub)).toBeGreaterThan(peso(conPopular))
   })

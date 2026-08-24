@@ -1,4 +1,5 @@
 import { GameLoop } from './ui/GameLoop.tsx'
+import { Pestanas, type PantallaId } from './ui/Pestanas.tsx'
 import { DevPanel } from './ui/debug/DevPanel.tsx'
 import { PlayerHeader } from './ui/player/PlayerHeader.tsx'
 import { Stage } from './ui/player/Stage.tsx'
@@ -8,14 +9,19 @@ import { Tienda } from './ui/panels/Tienda.tsx'
 import { Formatos } from './ui/panels/Formatos.tsx'
 import { Carrera } from './ui/panels/Carrera.tsx'
 import { Momentos } from './ui/panels/Momentos.tsx'
-import { Reparto } from './ui/panels/Reparto.tsx'
+import { Planificador } from './ui/panels/Planificador.tsx'
+import { Lectura } from './ui/panels/Lectura.tsx'
 import { TarjetaVida } from './ui/panels/TarjetaVida.tsx'
 import { Retiro } from './ui/panels/Retiro.tsx'
 import { Final } from './ui/panels/Final.tsx'
+import { Ciclo } from './ui/panels/Ciclo.tsx'
+import { Ayuda } from './ui/panels/Ayuda.tsx'
 import { Opciones } from './ui/panels/Opciones.tsx'
+import { Menu } from './ui/menu/Menu.tsx'
 import { Analytics } from '@vercel/analytics/react'
 import { useTelemetria } from './telemetria/usar.ts'
 import { Sparkline } from './ui/components/Sparkline.tsx'
+import { useEffect, useState } from 'react'
 import { useGame } from './store.ts'
 import { eur, fmt, pct } from './format.ts'
 import { houseLivingCost } from './sim/state.ts'
@@ -24,6 +30,15 @@ import { nivelFatiga } from './sim/formulas.ts'
 import { CONTENT_POR_ID } from './content/contentTypes.ts'
 import { BIG_POR_ID } from './content/bigEvents.ts'
 import { faseActual } from './sim/bigEvents.ts'
+import { enDirecto } from './sim/tick.ts'
+import { puedeRetirarse } from './sim/final.ts'
+import {
+  NOMBRE_BLOQUE,
+  NOMBRE_DIA,
+  NOMBRE_FRANJA,
+  bloqueActual,
+  posicionDeBloque,
+} from './sim/semana.ts'
 import type { TokenKey } from './ui/theme/palette.ts'
 
 /**
@@ -36,16 +51,57 @@ import type { TokenKey } from './ui/theme/palette.ts'
  * el chat ES la comunidad, y el boton Clip ES el momento clippeable del GDD.
  */
 export function App() {
+  const fase = useGame((s) => s.fase)
+
+  // El menu es una pantalla aparte, no un panel del juego: mientras esta
+  // delante no hay bucle corriendo y la partida no avanza sola.
+  if (fase === 'menu') return <Menu />
+
+  return <Partida />
+}
+
+function Partida() {
   const g = useGame((s) => s.game)
   const paused = useGame((s) => s.paused)
   const setPaused = useGame((s) => s.setPaused)
   const publish = useGame((s) => s.publish)
+  const toggleDirecto = useGame((s) => s.toggleDirecto)
   const catchClip = useGame((s) => s.catchClip)
   const avisoCarga = useGame((s) => s.avisoCarga)
+  const volverAlMenu = useGame((s) => s.volverAlMenu)
+
+  const [pantalla, setPantalla] = useState<PantallaId>('semana')
+
+  /**
+   * Al acabarse la semana, el juego te lleva a repartir la siguiente.
+   *
+   * Sin esto, terminar la semana mirando la tienda dejaba la partida parada
+   * sin que se viera por que: la pausa esta en otra pantalla.
+   */
+  const planificando = g.semana.fase === 'planificando'
+  useEffect(() => {
+    if (planificando) setPantalla('semana')
+  }, [planificando])
 
   // Telemetria anonima: en que minuto abandona la gente y como acaba. Sin
   // credenciales configuradas no hace nada en absoluto.
   useTelemetria()
+
+  /**
+   * Donde esta el creador dentro de su semana.
+   *
+   * Mientras se reparte no hay franja en curso: el reloj no corre y la barra
+   * dice que se esta decidiendo, que es informacion, no un hueco.
+   */
+  const franja = (() => {
+    if (g.semana.fase !== 'viviendo') return null
+    const { dia, franja: f } = posicionDeBloque(g.semana.cursor)
+    return `${NOMBRE_DIA[dia] ?? ''} ${(NOMBRE_FRANJA[f] ?? '').toLowerCase()} · ${NOMBRE_BLOQUE[bloqueActual(g.semana)]}`
+  })()
+
+  // El badge de EN DIRECTO deja de ser decorativo: dice si de verdad se esta
+  // emitiendo esta franja, contando el interruptor manual.
+  const emitiendo = enDirecto(g) && !paused
 
   const costeVidaSemanal = houseLivingCost(g.houseStage)
   const ingresosSemanales = g.ingresosPorSegundo * TUNABLES.secondsPerWeek
@@ -65,7 +121,9 @@ export function App() {
   const emitiendoEvento = faseActual(g.evento)?.fase === 'directo'
   const tituloDirecto = g.descanso
     ? 'Fuera unos dias'
-    : emitiendoEvento && eventoDef
+    : !emitiendo
+      ? 'Fuera de directo'
+      : emitiendoEvento && eventoDef
       ? eventoDef.tituloDirecto
       : (formato?.titulo ?? 'En directo')
 
@@ -82,7 +140,7 @@ export function App() {
           <PlayerHeader
             titulo={tituloDirecto}
             espectadores={g.alcance}
-            enDirecto={!paused && !g.descanso}
+            enDirecto={emitiendo}
           />
 
           <Stage
@@ -98,6 +156,11 @@ export function App() {
             progresoSemana={progresoSemana}
             semana={g.week}
             ciclo={g.cycle}
+            franja={franja}
+            enDirecto={emitiendo}
+            puedeEmitir={g.semana.fase === 'viviendo' && !g.descanso}
+            onToggleDirecto={toggleDirecto}
+            material={g.material}
             clipActivo={g.clip.activo}
             clipBonus={g.clip.bonusRestanteMs > 0}
             onClip={catchClip}
@@ -111,45 +174,84 @@ export function App() {
       {avisoCarga && <p className="aviso aviso--error">{avisoCarga}</p>}
       {fatiga !== 'ok' && <p className="aviso" data-nivel={fatiga}>{AVISO_FATIGA[fatiga]}</p>}
 
-      {/* Las dos curvas, juntas y a la misma altura: es donde se ve que el
-          alcance sube y baja mientras la comunidad sube y se queda. */}
-      <div className="curvas">
-        <Sparkline serie={g.historial.alcance} token="alcance" etiqueta="Alcance" />
-        <Sparkline serie={g.historial.comunidad} token="comunidad" etiqueta="Comunidad" />
+      <Pestanas
+        activa={pantalla}
+        onCambiar={setPantalla}
+        avisos={{
+          semana: planificando,
+          carrera: puedeRetirarse(g),
+          vida: Boolean(g.evento && !g.evento.preparado),
+        }}
+      />
+
+      <div className="pantalla" data-pantalla={pantalla}>
+        {pantalla === 'semana' && <Planificador />}
+
+        {pantalla === 'canal' && (
+          <>
+            {/* Las dos curvas, juntas y a la misma altura: es donde se ve que
+                el alcance sube y baja mientras la comunidad sube y se queda. */}
+            <div className="curvas">
+              <Sparkline serie={g.historial.alcance} token="alcance" etiqueta="Alcance" />
+              <Sparkline serie={g.historial.comunidad} token="comunidad" etiqueta="Comunidad" />
+            </div>
+
+            <div className="stats">
+              <Stat label="Alcance" valor={fmt(g.alcance)} token="alcance" hint="Gente que te descubre ahora. Sube rapido y cae con facilidad; la comunidad frena esa caida." />
+              <Stat label="Comunidad" valor={fmt(g.comunidad)} token="comunidad" hint="Gente que sigue por ti. Crece lento y protege cuando paras." />
+              <Stat label="Calidad" valor={g.calidad.toFixed(2)} token="calidad" hint="base x f(vida) x (1 - fatiga)^1.5 x mejoras. Multiplica el rendimiento por hora." />
+              <Stat label="Vida" valor={pct(g.vida)} token="vida" hint="Equilibrio personal. Alimenta la calidad y las ideas, y es lo que cuesta cambiar de rutina." />
+              <Stat label="Fatiga" valor={pct(g.fatiga)} token="fatiga" hint="Por encima del 60% la calidad sufre; del 85%, burnout. Cuesta caro, pero nunca termina la partida." />
+              <Stat label="Hype" valor={`x${(1 + g.hype).toFixed(2)}`} token="hype" hint="Multiplicador temporal. Decae rapido." />
+              <Stat label="Ideas" valor={fmt(g.ideas, 1)} token="ideas" hint="Materia prima de los formatos nuevos. La genera la vida personal y terminar libros." />
+              <Stat label="Material" valor={g.material.toFixed(1)} token="ingresos" hint="Videos montados y listos para subir. Salen de las franjas de editar; publicar y montarte el flujo los gastan." />
+              <Stat label="Ahorros" valor={eur(g.ahorros)} token="ingresos" hint="Lo que NO gastaste en mejoras. Es tu via de retiro." />
+              <Stat label="Ingresos" valor={`${eur(ingresosSemanales, 1)}/sem`} token="ingresos" hint="Alcance + comunidad + cola larga del catalogo." />
+              <Stat label="Coste de vida" valor={`${eur(costeVidaSemanal)}/sem`} token="fatiga" hint="Sube con cada etapa de casa: profesionalizarse encarece retirarse." />
+              <Stat label="Catalogo" valor={`${fmt(g.publicacionesTotales)}`} token="calidad" hint="Cada publicacion renta para siempre, tanto mas cuanta mas calidad tenia." />
+              <Stat label="Clips" valor={`${g.clip.acertados}`} token="alcance" hint="Momentos capturados. Fallarlos no cuesta progreso: la partida es ganable sin acertar ninguno." />
+            </div>
+
+            <Formatos />
+          </>
+        )}
+
+        {pantalla === 'tienda' && <Tienda />}
+
+        {pantalla === 'vida' && (
+          <>
+            <Momentos />
+            <Lectura />
+          </>
+        )}
+
+        {pantalla === 'carrera' && (
+          <>
+            <Carrera />
+            <Retiro />
+          </>
+        )}
+
+        {pantalla === 'ayuda' && (
+          <>
+            <Ayuda />
+            <Opciones />
+            <div className="barra-partida">
+              <button className="menu__boton" onClick={volverAlMenu}>
+                Guardar y salir al menú
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="stats">
-        <Stat label="Alcance" valor={fmt(g.alcance)} token="alcance" hint="Gente que te descubre ahora. Sube rapido y cae con facilidad; la comunidad frena esa caida." />
-        <Stat label="Comunidad" valor={fmt(g.comunidad)} token="comunidad" hint="Gente que sigue por ti. Crece lento y protege cuando paras." />
-        <Stat label="Calidad" valor={g.calidad.toFixed(2)} token="calidad" hint="base x f(vida) x (1 - fatiga)^1.5 x mejoras. Multiplica el rendimiento por hora." />
-        <Stat label="Vida" valor={pct(g.vida)} token="vida" hint="Equilibrio personal. Alimenta la calidad y las ideas." />
-        <Stat label="Fatiga" valor={pct(g.fatiga)} token="fatiga" hint="Por encima del 60% la calidad sufre; del 85%, burnout. Cuesta caro, pero nunca termina la partida." />
-        <Stat label="Hype" valor={`x${(1 + g.hype).toFixed(2)}`} token="hype" hint="Multiplicador temporal. Decae rapido." />
-        <Stat label="Ideas" valor={fmt(g.ideas, 1)} token="ideas" hint="Materia prima de los formatos nuevos. La genera la vida personal." />
-        <Stat label="Ahorros" valor={eur(g.ahorros)} token="ingresos" hint="Lo que NO gastaste en mejoras. Es tu via de retiro." />
-        <Stat label="Ingresos" valor={`${eur(ingresosSemanales, 1)}/sem`} token="ingresos" hint="Alcance + comunidad + cola larga del catalogo." />
-        <Stat label="Coste de vida" valor={`${eur(costeVidaSemanal)}/sem`} token="fatiga" hint="Sube con cada etapa de casa: profesionalizarse encarece retirarse." />
-        <Stat label="Catalogo" valor={`${fmt(g.publicacionesTotales)}`} token="calidad" hint="Cada publicacion renta para siempre, tanto mas cuanta mas calidad tenia." />
-        <Stat label="Clips" valor={`${g.clip.acertados}`} token="alcance" hint="Momentos capturados. Fallarlos no cuesta progreso: la partida es ganable sin acertar ninguno." />
-      </div>
-
-      <Carrera />
-
-      <Retiro />
-
-      <Momentos />
-
-      <Reparto />
-
-      <Formatos />
-
-      <Tienda />
-
-      <Opciones />
-
-      <DevPanel />
+      {/* El panel de desarrollo borra el guardado sin preguntar: fuera de
+          la build de desarrollo no tiene por que estar al alcance de nadie. */}
+      {import.meta.env.DEV && <DevPanel />}
 
       <TarjetaVida />
+
+      <Ciclo />
 
       <Final />
 

@@ -11,6 +11,7 @@ import {
 import { createInitialState, houseLivingCost, type GameState } from '../src/sim/state.ts'
 import { aplicarMejoras } from '../src/sim/shop.ts'
 import { step } from '../src/sim/tick.ts'
+import { lanzarSemana } from '../src/sim/semana.ts'
 import { TUNABLES } from '../src/sim/tunables.ts'
 
 /** Estado que cumple holgadamente cualquier requisito. */
@@ -85,7 +86,7 @@ describe('avance', () => {
   it('el tick avanza de ciclo solo, sin que el jugador decida', () => {
     // El GDD plantea los ciclos como etapas de una carrera, no como niveles
     // que se eligen: cuando has llegado, has llegado.
-    const s = step(todoCumplido(), TUNABLES.tickMs)
+    const s = step(lanzarSemana(todoCumplido()), TUNABLES.tickMs)
     expect(s.cycle).toBe(2)
   })
 
@@ -95,6 +96,26 @@ describe('avance', () => {
     s = avanzarCiclo(s)
     expect(s.cycle).toBe(3)
     expect(s.allocationUnlocked).toBe(true)
+  })
+
+  it('entrar en un ciclo deja su entrada esperando a ser leida', () => {
+    // El texto de `entrada` llevaba escrito desde el principio sin que nadie
+    // lo viera nunca. Ahora avanzar de ciclo lo pone delante del jugador.
+    const s = avanzarCiclo(todoCumplido())
+    expect(s.avisoCiclo).toBe(2)
+  })
+
+  it('la partida se detiene mientras la entrada del ciclo esta sin leer', () => {
+    // Mismo trato que una tarjeta de vida: leer no consume partida.
+    const s = step(lanzarSemana(todoCumplido()), TUNABLES.tickMs)
+    expect(s.avisoCiclo).toBe(2)
+    expect(step(s, TUNABLES.tickMs)).toBe(s)
+  })
+
+  it('una partida recien creada no arranca con ningun aviso', () => {
+    // Lo abre quien empieza partida nueva, no el motor: cargar un guardado no
+    // debe volver a contarte el principio.
+    expect(createInitialState().avisoCiclo).toBeNull()
   })
 
   it('el reparto al desbloquearse es el que ya tenia, no uno nuevo', () => {

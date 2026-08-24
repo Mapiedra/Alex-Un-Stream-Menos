@@ -75,18 +75,19 @@ export const COTIDIANO: LifeEvent[] = [
   },
   {
     id: 'libro-tarde',
-    titulo: 'Te has quedado leyendo',
-    texto: 'Ibas a leer un capitulo antes de dormir. Son las tres y quedan cuarenta paginas.',
+    titulo: 'Se te ha ido la tarde con el libro',
+    texto:
+      'Ibas a leer un rato despues de comer. Son las siete, no has tocado el ordenador y quedan cuarenta paginas.',
     peso: 3,
     opciones: [
       {
-        texto: 'Terminarlo',
-        resultado: 'Manana lo vas a notar, pero ya tienes de que hablar el jueves.',
+        texto: 'Terminarlo y que sea lo que sea',
+        resultado: 'La tarde entera fuera, pero ya tienes de que hablar el jueves.',
         efecto: { ideas: 3, fatiga: 0.04 },
       },
       {
-        texto: 'Dejarlo por hoy',
-        resultado: 'Ocho horas de sueno. Un lujo.',
+        texto: 'Cerrarlo y ponerte',
+        resultado: 'Vuelves a la mesa. El libro se queda ahi, mirandote.',
         efecto: { vida: 0.05, ideas: 1 },
       },
     ],

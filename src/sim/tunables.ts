@@ -20,6 +20,27 @@ export const TUNABLES = {
   /** Segundos de simulacion que dura una semana de juego. */
   secondsPerWeek: 90,
 
+  /**
+   * LA SEMANA — el tiempo es un presupuesto que se gasta, no un rio.
+   *
+   * Siete dias por tres franjas dan 21 unidades: bastantes para que repartir
+   * sea una decision con matices, y pocas para que colocarlas no sea un
+   * trabajo. Cada franja dura secondsPerWeek/21 segundos de simulacion.
+   */
+  semana: {
+    dias: 7,
+    franjasPorDia: 3,
+    /**
+     * Que parte de las horas de produccion dedica a emitir el plan automatico.
+     * El resto va a editar, que es lo que deja material para publicar: un plan
+     * que solo emitiera dejaria al jugador de los ciclos 1-2 sin nada que
+     * subir.
+     */
+    emisionDelPlan: 0.6,
+    /** Que parte de las horas de vida dedica a leer el plan automatico. */
+    lecturaDelPlan: 0.35,
+  },
+
   /** ALCANCE — sube rapido, cae con facilidad. */
   alcance: {
     /** Vida media en segundos sin comunidad que lo proteja. */
@@ -145,8 +166,13 @@ export const TUNABLES = {
      * cobertura: el retiro se decidia en realidad por acumular ahorros, que es
      * justo la lectura que el juego NO quiere. Subirlo pone el peso donde
      * tiene que estar.
+     *
+     * Recalibrado en F7 de 0.0028 a 0.004. Publicar dejo de ser gratis y pasó
+     * a costar material, asi que de nueve publicaciones por semana se pasa a
+     * dos o tres: menos videos, cada uno pesando mas. La compensacion no es
+     * arbitraria, es la misma renta repartida entre menos entradas.
      */
-    residualPerPublication: 0.0028,
+    residualPerPublication: 0.004,
     /** Vida media del decaimiento de una publicacion, en semanas. */
     decayHalfLifeWeeks: 8,
     /**
@@ -156,9 +182,64 @@ export const TUNABLES = {
     floorFraction: 0.12,
   },
 
+  /**
+   * PUBLICAR — deja de ser un boton infinito.
+   *
+   * Publicar cuesta MATERIAL, y el material sale de las horas: grabando poco
+   * mientras emites, y de verdad cuando te sientas a editar. Eso es lo que
+   * convierte "no emitir" en una decision con sentido en vez de tiempo tirado,
+   * y lo que convierte el boton en una decision en vez de un tic.
+   *
+   * Los ritmos estan puestos para que el reparto de arranque —nueve franjas
+   * emitiendo y seis editando— de unas tres publicaciones normales por semana.
+   */
+  publicacion: {
+    /** Material por segundo mientras se emite: lo que se graba de paso. */
+    porSegundoEmitiendo: 0.02,
+    /** Material por segundo editando. Es aqui donde salen los videos. */
+    porSegundoEditando: 0.09,
+    /** Tope de material acumulable: se puede tener colchon, no un almacen. */
+    maximo: 12,
+    /**
+     * Los tres niveles de edicion.
+     *
+     * `peso` es lo que entra al catalogo, y por tanto la renta a años vista:
+     * es LA via de retiro. Sacarlo rapido crece hoy —mas pico y mas hype— y
+     * cuidarlo construye el final. Por material invertido, cuidado renta mas;
+     * lo que compra rapido es tiempo.
+     */
+    niveles: {
+      rapido: { material: 0.6, peso: 0.5, pico: 1.1, hype: 1.3 },
+      normal: { material: 1, peso: 1, pico: 1, hype: 1 },
+      cuidado: { material: 1.8, peso: 2.2, pico: 0.7, hype: 0.6 },
+    },
+  },
+
   /** IDEAS — materia prima de los formatos nuevos. */
   ideas: {
     perSecondAtFullLife: 0.02,
+  },
+
+  /**
+   * LEER — horas del dia a dia, no un extra antes de dormir.
+   *
+   * Los ritmos estan puestos para que una franja de leer a la semana termine
+   * un libro corto en unas cuatro o cinco semanas: lo bastante lento para que
+   * elegir leer cueste algo, lo bastante rapido para que se llegue a ver el
+   * final del libro dentro de una partida.
+   */
+  lectura: {
+    /** Segundos de libro por segundo de franja de leer. */
+    porSegundoLeyendo: 1,
+    /** Lo que cunde leer en una franja de vivir, como fraccion. */
+    fraccionViviendo: 0.35,
+    /** Lo que aporta cada nivel del habito. No crea tiempo: lo aprovecha. */
+    porNivelDeHabito: 0.25,
+    /** Ideas de golpe al cerrar un libro. */
+    ideasPorLibro: 6,
+    /** Semanas que dura el empujon de calidad tras terminarlo. */
+    semanasDeposo: 5,
+    calidadDeposo: 1.1,
   },
 
   /** VACACIONES — el GDD las quiere razonables y a menudo optimas (6.4). */

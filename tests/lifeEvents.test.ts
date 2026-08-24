@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { lanzarSemana } from '../src/sim/semana.ts'
 import { LIFE_EVENTS } from '../src/content/lifeEvents.ts'
 import {
   SEMANAS_ENTRE_EVENTOS,
@@ -171,7 +172,7 @@ describe('la partida se detiene mientras hay una tarjeta abierta', () => {
     let s = createInitialState(3)
     const ticksPorSemana = (TUNABLES.secondsPerWeek * 1000) / TUNABLES.tickMs
     for (let i = 0; i < ticksPorSemana * (SEMANAS_ENTRE_EVENTOS + 1); i++) {
-      s = step(s, TUNABLES.tickMs)
+      s = step(lanzarSemana(s), TUNABLES.tickMs)
       if (s.eventoPendiente) break
     }
     expect(s.eventoPendiente).not.toBeNull()
@@ -181,7 +182,7 @@ describe('la partida se detiene mientras hay una tarjeta abierta', () => {
     let s = createInitialState(3)
     const ticksPorSemana = (TUNABLES.secondsPerWeek * 1000) / TUNABLES.tickMs
     for (let i = 0; i < ticksPorSemana * (SEMANAS_ENTRE_EVENTOS + 1); i++) {
-      s = step(s, TUNABLES.tickMs)
+      s = step(lanzarSemana(s), TUNABLES.tickMs)
       if (s.eventoPendiente) break
     }
     const id = s.eventoPendiente
@@ -190,6 +191,6 @@ describe('la partida se detiene mientras hay una tarjeta abierta', () => {
 
     const reanudada = resolver(s, id, 0)
     const antes = reanudada.elapsedMs
-    expect(step(reanudada, TUNABLES.tickMs).elapsedMs).toBeGreaterThan(antes)
+    expect(step(lanzarSemana(reanudada), TUNABLES.tickMs).elapsedMs).toBeGreaterThan(antes)
   })
 })

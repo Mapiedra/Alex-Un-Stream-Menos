@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { lanzarSemana } from '../src/sim/semana.ts'
+import { replanificar } from '../src/sim/shop.ts'
 import {
   aplicarRecuperacion,
   avanzarDescanso,
@@ -17,7 +19,7 @@ function avanzar(s: GameState, ticks: number): GameState {
   let actual = s
   for (let i = 0; i < ticks; i++) {
     if (actual.eventoPendiente) actual = resolver(actual, actual.eventoPendiente, 0)
-    actual = step(actual, TUNABLES.tickMs)
+    actual = step(lanzarSemana(actual), TUNABLES.tickMs)
   }
   return actual
 }
@@ -76,12 +78,18 @@ describe('vacaciones', () => {
   })
 
   it('la partida completa restaura el reparto que habia antes de parar', () => {
-    const original = { produccion: 0.6, comunidad: 0.2, vida: 0.1, descanso: 0.1 }
-    let s: GameState = { ...createInitialState(7), allocation: original }
-    s = irseDeVacaciones({ ...s, repartoAntesDeParar: s.allocation })
+    // El reparto va por `replanificar` porque desde F7 son 21 franjas y no un
+    // porcentaje libre: 0.6 de produccion son 13 bloques de 21, no 12.6.
+    const antes = replanificar(createInitialState(7), {
+      produccion: 0.6,
+      comunidad: 0.2,
+      vida: 0.1,
+      descanso: 0.1,
+    })
+    let s: GameState = irseDeVacaciones({ ...antes, repartoAntesDeParar: antes.allocation })
     s = avanzar(s, ticksSemana * (TUNABLES.vacaciones.semanas + 1))
     expect(s.descanso).toBeNull()
-    expect(s.allocation).toEqual(original)
+    expect(s.allocation).toEqual(antes.allocation)
   })
 })
 
@@ -110,11 +118,10 @@ describe('burnout', () => {
   })
 
   it('salta solo al pasar el umbral, sin que el jugador lo pida', () => {
-    let s: GameState = {
-      ...createInitialState(8),
-      fatiga: TUNABLES.fatiga.burnoutThreshold - 0.01,
-      allocation: { produccion: 1, comunidad: 0, vida: 0, descanso: 0 },
-    }
+    let s: GameState = replanificar(
+      { ...createInitialState(8), fatiga: TUNABLES.fatiga.burnoutThreshold - 0.01 },
+      { produccion: 1, comunidad: 0, vida: 0, descanso: 0 },
+    )
     // Con el ritmo de fatiga calibrado en F6 hacen falta unos minutos de
     // simulacion para cruzar el ultimo punto, no unos segundos.
     s = avanzar(s, 3000)

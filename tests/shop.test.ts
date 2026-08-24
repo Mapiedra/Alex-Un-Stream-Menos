@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { UPGRADES, UPGRADES_POR_ID } from '../src/content/upgrades.ts'
+import {
+  MONEDA_CATEGORIA,
+  UPGRADES,
+  UPGRADES_POR_ID,
+  VIDA_MINIMA_PARA_RUTINA,
+  escalon,
+  type Categoria,
+} from '../src/content/upgrades.ts'
 import {
   costeSiguiente,
   derivarAllocation,
@@ -14,6 +21,10 @@ const conDinero = (ahorros: number, ideas = 100) => ({
   ahorros,
   ideas,
 })
+
+/** Bolsillos de referencia para los tests de disponibilidad. */
+const SIN_NADA = { ahorros: 0, ideas: 0, material: 0, vida: 1 }
+const DE_SOBRA = { ahorros: 1e9, ideas: 1e9, material: 1e9, vida: 1 }
 
 describe('integridad del catalogo', () => {
   it('los ids son unicos', () => {
@@ -46,6 +57,100 @@ describe('integridad del catalogo', () => {
     const casas = UPGRADES.filter((u) => u.efecto.subeCasa)
     expect(casas.length).toBeGreaterThan(0)
     expect(houseLivingCost(casas.length)).toBeGreaterThan(houseLivingCost(0))
+  })
+})
+
+/**
+ * UNA MONEDA POR CATEGORIA.
+ *
+ * El contrato que fija F8: nada sale gratis, y lo que cuesta cada cosa dice
+ * que clase de cosa es. Antes habia cuatro mejoras a coste cero que se
+ * compraban sin pensar; ahora todas piden algo y hay que decidir.
+ */
+describe('nada sale gratis', () => {
+  it('toda mejora cuesta algo en alguna moneda', () => {
+    for (const u of UPGRADES) {
+      const total = u.coste + (u.costeIdeas ?? 0) + (u.costeMaterial ?? 0) + (u.costeVida ?? 0)
+      expect(total, `"${u.nombre}" no cuesta nada`).toBeGreaterThan(0)
+    }
+  })
+
+  it('cada categoria cobra en su moneda', () => {
+    const moneda: Record<Categoria, (u: (typeof UPGRADES)[number]) => number> = {
+      setup: (u) => u.coste,
+      casa: (u) => u.coste,
+      flujo: (u) => u.costeMaterial ?? 0,
+      rutina: (u) => u.costeVida ?? 0,
+      formato: (u) => u.costeIdeas ?? 0,
+    }
+    for (const u of UPGRADES) {
+      expect(moneda[u.categoria](u), `"${u.nombre}" no cobra en la moneda de su categoria`)
+        .toBeGreaterThan(0)
+    }
+  })
+
+  it('la tienda explica en que se paga cada categoria', () => {
+    for (const c of Object.keys(MONEDA_CATEGORIA) as Categoria[]) {
+      expect(MONEDA_CATEGORIA[c].length, c).toBeGreaterThan(30)
+    }
+  })
+
+  it('lo que cuesta la vida se puede recuperar', () => {
+    // Si una rutina costase media vida seria una trampa, no una inversion:
+    // el GDD pide que parar y cuidarse sea siempre razonable.
+    for (const u of UPGRADES) {
+      expect(u.costeVida ?? 0, u.id).toBeLessThanOrEqual(0.15)
+    }
+  })
+
+  it('lo que cuesta el material cabe en unas pocas semanas de editar', () => {
+    const total = UPGRADES.reduce((acc, u) => acc + (u.costeMaterial ?? 0) * u.maximo, 0)
+    // Montarse el flujo entero no puede costar mas videos de los que se sacan
+    // en un trimestre, o dejaria el catalogo sin arrancar.
+    expect(total).toBeLessThan(15)
+    expect(total).toBeGreaterThan(2)
+  })
+
+  it('toda mejora devuelve algo por lo que cuesta', () => {
+    // Las de automatizacion no tienen `efecto` porque actuan por `owned`: el
+    // motor las consulta en publicarAutomatico. Van listadas para que anadir
+    // una mejora vacia por descuido siga fallando aqui.
+    const porOwned = new Set(['avisos', 'calendario', 'programacion'])
+    for (const u of UPGRADES) {
+      if (porOwned.has(u.id)) continue
+      expect(Object.keys(u.efecto).length, `"${u.nombre}" no da nada a cambio`).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('los peldaños', () => {
+  it('hay tantos como niveles cuando se declaran', () => {
+    for (const u of UPGRADES) {
+      if (!u.escalones) continue
+      expect(u.escalones.length, u.id).toBe(u.maximo)
+    }
+  })
+
+  it('cada peldaño tiene nombre propio y frase', () => {
+    // Es lo que separa una progresion de pulsar el mismo boton cuatro veces.
+    for (const u of UPGRADES) {
+      for (const e of u.escalones ?? []) {
+        expect(e.nombre.length, u.id).toBeGreaterThan(3)
+        expect(e.descripcion.length, u.id).toBeGreaterThan(20)
+      }
+    }
+  })
+
+  it('la tienda pide el peldaño que toca, no el que ya tienes', () => {
+    const micro = UPGRADES_POR_ID.get('micro')!
+    expect(escalon(micro, 0)).toBe(micro.escalones?.[0])
+    expect(escalon(micro, 1)).toBe(micro.escalones?.[1])
+    expect(escalon(micro, micro.maximo)).toBeNull()
+  })
+
+  it('la mayoria del equipo tiene varios peldaños', () => {
+    const setup = UPGRADES.filter((u) => u.categoria === 'setup')
+    expect(setup.filter((u) => u.maximo > 1).length).toBe(setup.length)
   })
 })
 
@@ -122,9 +227,40 @@ describe('comprar', () => {
   })
 
   it('no se pasa del maximo', () => {
-    let s = conDinero(100_000)
-    for (let i = 0; i < 5; i++) s = comprar(s, 'micro')
-    expect(s.owned['micro']).toBe(1)
+    // El micro tiene tres peldaños desde F8: se compra hasta arriba y ni uno mas.
+    const up = UPGRADES_POR_ID.get('micro')!
+    let s = conDinero(1_000_000)
+    for (let i = 0; i < up.maximo + 4; i++) s = comprar(s, 'micro')
+    expect(s.owned['micro']).toBe(up.maximo)
+  })
+
+  it('el flujo cuesta material y lo cobra', () => {
+    const sinMaterial = { ...conDinero(10_000), material: 0 }
+    expect(comprar(sinMaterial, 'plantillas').owned['plantillas']).toBeUndefined()
+
+    const conMaterial = { ...conDinero(10_000), material: 5 }
+    const s = comprar(conMaterial, 'plantillas')
+    expect(s.owned['plantillas']).toBe(1)
+    expect(s.material).toBeLessThan(5)
+  })
+
+  it('la rutina cuesta vida y la cobra', () => {
+    const s = comprar({ ...conDinero(10_000), vida: 0.9 }, 'dormir')
+    expect(s.owned['dormir']).toBe(1)
+    expect(s.vida).toBeLessThan(0.9)
+  })
+
+  it('no se puede reorganizar la vida estando hecho polvo', () => {
+    /**
+     * La otra mitad de lo que quiere decir la categoria: cambiar de habitos no
+     * cuesta dinero, cuesta poder. Quien esta al limite no puede permitirselo,
+     * y eso convierte descansar en el paso previo a mejorar.
+     */
+    const roto = { ...conDinero(10_000), vida: VIDA_MINIMA_PARA_RUTINA + 0.01 }
+    expect(comprar(roto, 'dormir')).toBe(roto)
+
+    const descansado = { ...roto, vida: 0.8 }
+    expect(comprar(descansado, 'dormir').owned['dormir']).toBe(1)
   })
 
   it('los formatos cuestan ideas', () => {
@@ -195,8 +331,8 @@ describe('disponibilidad', () => {
     const up = UPGRADES_POR_ID.get('pc')
     expect(up).toBeDefined()
     if (!up) return
-    expect(disponibilidad(up, {}, 1, 0, 0).motivo).toBe('dinero')
-    expect(disponibilidad(up, { pc: 4 }, 1, 1e9, 1e9).motivo).toBe('agotada')
-    expect(disponibilidad(up, {}, 1, 1e9, 1e9).motivo).toBe(null)
+    expect(disponibilidad(up, {}, 1, SIN_NADA).motivo).toBe('dinero')
+    expect(disponibilidad(up, { pc: 4 }, 1, DE_SOBRA).motivo).toBe('agotada')
+    expect(disponibilidad(up, {}, 1, DE_SOBRA).motivo).toBe(null)
   })
 })

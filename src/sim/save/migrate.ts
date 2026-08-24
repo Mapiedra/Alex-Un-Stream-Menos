@@ -1,7 +1,10 @@
 import { createClipState } from '../clip.ts'
 import { FORMATO_INICIAL } from '../../content/contentTypes.ts'
 import { crearHistorial } from '../historial.ts'
-import { SCHEMA_VERSION, type GameState } from '../state.ts'
+import { allocationDelPlan, planAutomatico, type Semana } from '../semana.ts'
+import { NIVEL_POR_DEFECTO } from '../publicacion.ts'
+import { crearLectura } from '../lectura.ts'
+import { SCHEMA_VERSION, type Allocation, type GameState } from '../state.ts'
 
 /**
  * Migraciones de partidas guardadas.
@@ -89,6 +92,76 @@ export const MIGRACIONES: Record<number, Migracion> = {
     semanasEnUmbral: 0,
     schemaVersion: 7,
   }),
+
+  /**
+   * v7 -> v8: aparecen las entradas de ciclo. Una partida vieja se reanuda
+   * sin aviso pendiente: ya estaba jugando ese ciclo, no acaba de entrar.
+   */
+  7: (s) => ({
+    ...s,
+    avisoCiclo: null,
+    schemaVersion: 8,
+  }),
+
+  /**
+   * v8 -> v9: el tiempo deja de correr solo y pasa a repartirse por franjas.
+   *
+   * El reparto guardado se traduce a una semana concreta de bloques, asi que
+   * una partida vieja se reanuda gastando sus horas exactamente en lo mismo
+   * que antes. Arranca en fase de planificar: lo primero que ve quien vuelve
+   * es su semana, que es justo lo que hay que entender.
+   */
+  8: (s) => {
+    const bloques = planAutomatico(repartoGuardado(s['allocation']))
+    const semana: Semana = { bloques, cursor: 0, fase: 'planificando' }
+    return {
+      ...s,
+      semana,
+      allocation: allocationDelPlan(bloques),
+      schemaVersion: 9,
+    }
+  },
+
+  /**
+   * v9 -> v10: el directo se enciende y se apaga, y publicar cuesta material.
+   *
+   * Una partida vieja se reanuda con material para un par de videos: venia de
+   * una version donde publicar era gratis, y quedarse con el boton bloqueado
+   * de golpe seria castigar al jugador por haber actualizado.
+   */
+  9: (s) => ({
+    ...s,
+    directoManual: null,
+    material: 2,
+    nivelAuto: NIVEL_POR_DEFECTO,
+    schemaVersion: 10,
+  }),
+
+  /**
+   * v10 -> v11: aparecen los libros. Una partida vieja empieza con la mesilla
+   * vacia y ningun libro leido: leia, pero el juego no lo contaba.
+   */
+  10: (s) => ({
+    ...s,
+    lectura: crearLectura(),
+    schemaVersion: 11,
+  }),
+}
+
+/** Lee el reparto de un guardado viejo, con un plan B si viene roto. */
+function repartoGuardado(valor: unknown): Allocation {
+  const POR_DEFECTO: Allocation = { produccion: 0.7, comunidad: 0.05, vida: 0.15, descanso: 0.1 }
+  if (typeof valor !== 'object' || valor === null) return POR_DEFECTO
+  const a = valor as Record<string, unknown>
+  const leer = (k: string): number => (typeof a[k] === 'number' && a[k] >= 0 ? (a[k] as number) : 0)
+  const r = {
+    produccion: leer('produccion'),
+    comunidad: leer('comunidad'),
+    vida: leer('vida'),
+    descanso: leer('descanso'),
+  }
+  const total = r.produccion + r.comunidad + r.vida + r.descanso
+  return total > 0 ? r : POR_DEFECTO
 }
 
 export class SaveIncompatible extends Error {}

@@ -69,7 +69,10 @@ export function avanzarCiclo(state: GameState): GameState {
 
   const siguiente = state.cycle + 1
   const nuevo = CYCLE_POR_NUMERO.get(siguiente)
-  let s: GameState = { ...state, cycle: siguiente }
+  // El aviso detiene la partida hasta que el jugador lee el cierre del ciclo
+  // que acaba y la entrada del que empieza. Ese texto llevaba escrito desde
+  // el principio en content/cycles.ts sin que nadie lo viera nunca.
+  let s: GameState = { ...state, cycle: siguiente, avisoCiclo: siguiente }
 
   // El ciclo 3 devuelve al creador el control de sus horas.
   if (nuevo?.abreReparto) s = desbloquearReparto(s)

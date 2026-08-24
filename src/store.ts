@@ -1,6 +1,13 @@
 import { create } from 'zustand'
-import { createInitialState, normalizeAllocation, type Allocation, type GameState } from './sim/state.ts'
-import { cambiarFormato, publicar, step } from './sim/tick.ts'
+import { createInitialState, type GameState } from './sim/state.ts'
+import {
+  allocationDelPlan,
+  llenarSemana,
+  planificarBloque,
+  type BloqueId,
+} from './sim/semana.ts'
+import { alternarDirecto, cambiarFormato, publicar, step } from './sim/tick.ts'
+import { nivelValido, type NivelEdicion } from './sim/publicacion.ts'
 import { clipCatch } from './sim/clip.ts'
 import { comprar, desbloquearReparto } from './sim/shop.ts'
 import { resolver } from './sim/lifeEvents.ts'
@@ -12,8 +19,20 @@ import { borrarGuardado, cargar, guardar } from './sim/save/index.ts'
 /** Cada cuantos ms de tiempo real se autoguarda. */
 const AUTOSAVE_MS = 10_000
 
+/**
+ * En que pantalla esta el jugador.
+ *
+ * Vive en el store y NO en `GameState` a proposito: es estado de la
+ * aplicacion, no de la partida. Guardar y cargar no debe recordar en que
+ * pantalla estabas, igual que las preferencias de accesibilidad viven aparte.
+ */
+export type Fase = 'menu' | 'jugando'
+
 interface GameStore {
   game: GameState
+  fase: Fase
+  /** Habia una partida recuperable al abrir. Lo necesita el menu. */
+  hayGuardado: boolean
   /** Velocidad del DevPanel. No es balance: es herramienta de desarrollo. */
   speedMultiplier: number
   /**
@@ -24,8 +43,15 @@ interface GameStore {
   /** Mensaje para la UI cuando la carga de la partida no sale bien. */
   avisoCarga: string | null
 
+  nuevaPartida: (seed?: number) => void
+  continuar: () => void
+  volverAlMenu: () => void
+  cerrarAvisoCiclo: () => void
+
   advance: (dtMs: number) => void
-  publish: () => void
+  publish: (nivel: NivelEdicion) => void
+  toggleDirecto: () => void
+  setNivelAuto: (nivel: NivelEdicion) => void
   catchClip: () => void
   buy: (id: string) => void
   setFormato: (id: string) => void
@@ -35,21 +61,31 @@ interface GameStore {
   elegirFinal: (id: string) => void
   prepararEvento: () => void
   unlockAllocation: () => void
-  setAllocation: (a: Allocation) => void
+  planificar: (indice: number, bloque: BloqueId) => void
+  llenarSemanaCon: (bloque: BloqueId) => void
+  vivirSemana: () => void
   setSpeed: (m: number) => void
   setPaused: (p: boolean) => void
   reset: (seed?: number) => void
   saveNow: () => void
 }
 
-/** Intenta reanudar la partida guardada; si no se puede, empieza una nueva. */
-function estadoInicial(): { game: GameState; avisoCarga: string | null } {
+/**
+ * Prepara el arranque de la aplicacion.
+ *
+ * Carga el guardado si lo hay, pero YA NO implica empezar a jugar: el juego
+ * abre en el menu y es el jugador quien decide continuar o empezar de cero.
+ * Antes de F7 la partida arrancaba sola en el primer frame y no habia forma de
+ * saber cuando empezaba ni cuando acababa.
+ */
+function estadoInicial(): { game: GameState; avisoCarga: string | null; hayGuardado: boolean } {
   const r = cargar()
-  if (!r) return { game: createInitialState(), avisoCarga: null }
-  if (r.ok) return { game: r.state, avisoCarga: null }
+  if (!r) return { game: createInitialState(), avisoCarga: null, hayGuardado: false }
+  if (r.ok) return { game: r.state, avisoCarga: null, hayGuardado: true }
   return {
     game: createInitialState(),
     avisoCarga: `No se pudo recuperar la partida anterior: ${r.motivo}`,
+    hayGuardado: false,
   }
 }
 
@@ -60,9 +96,45 @@ let desdeUltimoGuardado = 0
 
 export const useGame = create<GameStore>((set, get) => ({
   game: inicial.game,
+  fase: 'menu',
+  hayGuardado: inicial.hayGuardado,
   speedMultiplier: 1,
   paused: false,
   avisoCarga: inicial.avisoCarga,
+
+  /**
+   * Empezar de cero.
+   *
+   * Arranca con `avisoCiclo: 1` para que lo primero que vea el jugador sea la
+   * entrada del ciclo 1 y no un reproductor con doce cifras y ningun contexto.
+   */
+  nuevaPartida: (seed) => {
+    borrarGuardado()
+    desdeUltimoGuardado = 0
+    set({
+      game: { ...createInitialState(seed), avisoCiclo: 1 },
+      fase: 'jugando',
+      hayGuardado: false,
+      paused: false,
+      avisoCarga: null,
+    })
+  },
+
+  continuar: () => set({ fase: 'jugando', paused: false }),
+
+  // Volver al menu guarda: salir no puede costarte los ultimos diez segundos.
+  volverAlMenu: () => {
+    guardar(get().game)
+    set({ fase: 'menu', hayGuardado: true })
+  },
+
+  cerrarAvisoCiclo: () =>
+    set((s) => {
+      if (s.game.avisoCiclo === null) return s
+      const game = { ...s.game, avisoCiclo: null }
+      guardar(game)
+      return { game }
+    }),
 
   advance: (dtMs) =>
     set((s) => {
@@ -78,9 +150,26 @@ export const useGame = create<GameStore>((set, get) => ({
       return { game }
     }),
 
-  publish: () =>
+  // Publicar cuesta material y elige nivel: es una decision, no un tic.
+  publish: (nivel) =>
     set((s) => {
-      const game = publicar(s.game)
+      const game = publicar(s.game, nivel)
+      if (game === s.game) return s
+      guardar(game)
+      return { game }
+    }),
+
+  // Empezar o cortar el directo. La semana pone el marco, esto el momento.
+  toggleDirecto: () =>
+    set((s) => {
+      const game = alternarDirecto(s.game)
+      if (game === s.game) return s
+      return { game }
+    }),
+
+  setNivelAuto: (nivel) =>
+    set((s) => {
+      const game = { ...s.game, nivelAuto: nivelValido(nivel) }
       guardar(game)
       return { game }
     }),
@@ -158,8 +247,36 @@ export const useGame = create<GameStore>((set, get) => ({
       return { game }
     }),
 
-  setAllocation: (a) =>
-    set((s) => ({ game: { ...s.game, allocation: normalizeAllocation(a) } })),
+  /**
+   * Colocar una franja.
+   *
+   * No guarda en cada clic —planificar son veintiun clics seguidos y no hace
+   * falta escribir en disco veintiuna veces—; lo guarda `vivirSemana`, que es
+   * cuando la decision queda tomada.
+   */
+  planificar: (indice, bloque) =>
+    set((s) => {
+      if (s.game.semana.fase !== 'planificando' || !s.game.allocationUnlocked) return s
+      const semana = planificarBloque(s.game.semana, indice, bloque)
+      if (semana === s.game.semana) return s
+      return { game: { ...s.game, semana, allocation: allocationDelPlan(semana.bloques) } }
+    }),
+
+  llenarSemanaCon: (bloque) =>
+    set((s) => {
+      if (s.game.semana.fase !== 'planificando' || !s.game.allocationUnlocked) return s
+      const semana = llenarSemana(s.game.semana, bloque)
+      return { game: { ...s.game, semana, allocation: allocationDelPlan(semana.bloques) } }
+    }),
+
+  // Lanzar la semana es LA decision del juego: se guarda al momento.
+  vivirSemana: () =>
+    set((s) => {
+      if (s.game.semana.fase !== 'planificando') return s
+      const game = { ...s.game, semana: { ...s.game.semana, fase: 'viviendo' as const } }
+      guardar(game)
+      return { game }
+    }),
 
   setSpeed: (m) => set({ speedMultiplier: m }),
   setPaused: (p) => set({ paused: p }),

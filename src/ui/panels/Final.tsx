@@ -24,7 +24,8 @@ export function Final() {
   const final = useGame((s) => s.game.final)
   const g = useGame((s) => s.game)
   const elegir = useGame((s) => s.elegirFinal)
-  const reset = useGame((s) => s.reset)
+  const nuevaPartida = useGame((s) => s.nuevaPartida)
+  const volverAlMenu = useGame((s) => s.volverAlMenu)
   const [pendiente, setPendiente] = useState<string | null>(null)
 
   if (!final) return null
@@ -88,9 +89,14 @@ export function Final() {
 
         <MuroFinales propio={final.epilogo} />
 
-        <button className="tarjeta__opcion" onClick={() => reset()}>
-          Empezar otra vez
-        </button>
+        <div className="tarjeta__opciones">
+          <button className="tarjeta__opcion" onClick={() => nuevaPartida()}>
+            Empezar otra vez
+          </button>
+          <button className="tarjeta__opcion" onClick={volverAlMenu}>
+            Volver al menú
+          </button>
+        </div>
       </article>
     </div>
   )

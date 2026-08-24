@@ -1,5 +1,5 @@
 import { UPGRADES, type Categoria } from '../../src/content/upgrades.ts'
-import { disponibilidad } from '../../src/sim/allocation.ts'
+import { bolsilloDe, disponibilidad } from '../../src/sim/allocation.ts'
 import { cobertura } from '../../src/sim/final.ts'
 import type { Allocation, GameState } from '../../src/sim/state.ts'
 
@@ -57,7 +57,7 @@ const cada = (s: GameState, segundos: number): boolean =>
 export function siguienteCompra(s: GameState, prioridad: Categoria[]): string | null {
   for (const cat of prioridad) {
     const candidatas = UPGRADES.filter((u) => u.categoria === cat)
-      .map((u) => ({ u, d: disponibilidad(u, s.owned, s.cycle, s.ahorros, s.ideas) }))
+      .map((u) => ({ u, d: disponibilidad(u, s.owned, s.cycle, bolsilloDe(s)) }))
       .filter((x) => x.d.comprable)
       .sort((a, b) => a.d.coste - b.d.coste)
     const elegida = candidatas[0]

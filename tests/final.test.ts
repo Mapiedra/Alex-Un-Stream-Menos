@@ -11,6 +11,8 @@ import { EPILOGOS, NOMBRE_EPILOGO, OPCIONES_FINALES } from '../src/content/narra
 import { createInitialState, type GameState } from '../src/sim/state.ts'
 import { TUNABLES } from '../src/sim/tunables.ts'
 import { step } from '../src/sim/tick.ts'
+import { lanzarSemana } from '../src/sim/semana.ts'
+import { replanificar } from '../src/sim/shop.ts'
 
 /**
  * Una partida que cumple todas las condiciones del retiro con holgura.
@@ -20,7 +22,11 @@ import { step } from '../src/sim/tick.ts'
  * simulan, pero en cuanto se llama a step() se pisa. Por eso tambien se sube
  * multCalidad, que es lo que de verdad la sostiene.
  */
-const jubilable = (over: Partial<GameState> = {}): GameState => ({
+const jubilable = (over: Partial<GameState> = {}): GameState =>
+  // El reparto se pasa por `replanificar` porque desde F7 `allocation` es la
+  // lectura de la semana repartida, no un campo suelto: ponerlo a mano lo
+  // pisaria el primer tick.
+  conReparto({
   ...createInitialState(),
   comunidad: 500_000,
   calidad: 4,
@@ -35,7 +41,11 @@ const jubilable = (over: Partial<GameState> = {}): GameState => ({
   allocation: { produccion: 0.1, comunidad: 0.3, vida: 0.3, descanso: 0.3 },
   week: 100,
   ...over,
-})
+  })
+
+function conReparto(s: GameState): GameState {
+  return replanificar(s, s.allocation)
+}
 
 describe('las ocho condiciones de la seccion 11', () => {
   it('una partida recien empezada no cumple casi ninguna', () => {
@@ -94,7 +104,7 @@ describe('sostenerlo, no rozarlo', () => {
   it('el contador sube solo mientras se cumplen', () => {
     let s = jubilable({ semanasEnUmbral: 0, week: 0, elapsedMs: 0 })
     const ticksSemana = (TUNABLES.secondsPerWeek * 1000) / TUNABLES.tickMs
-    for (let i = 0; i < ticksSemana * 3 + 10; i++) s = step(s, TUNABLES.tickMs)
+    for (let i = 0; i < ticksSemana * 3 + 10; i++) s = step(lanzarSemana(s), TUNABLES.tickMs)
     expect(s.semanasEnUmbral).toBeGreaterThan(0)
   })
 
@@ -106,7 +116,7 @@ describe('sostenerlo, no rozarlo', () => {
       allocation: { produccion: 1, comunidad: 0, vida: 0, descanso: 0 },
     })
     const ticksSemana = (TUNABLES.secondsPerWeek * 1000) / TUNABLES.tickMs
-    for (let i = 0; i < ticksSemana + 10; i++) s = step(s, TUNABLES.tickMs)
+    for (let i = 0; i < ticksSemana + 10; i++) s = step(lanzarSemana(s), TUNABLES.tickMs)
     expect(s.semanasEnUmbral).toBe(0)
   })
 })
