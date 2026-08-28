@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import avatar from '../../assets/avatar.png'
 import { objetosVisibles } from '../../content/houseStages.ts'
+import type { BloqueId } from '../../sim/semana.ts'
 
 interface Props {
   /** 0..1 — cuanta actividad hay fuera. Enciende los neones de la calle. */
@@ -8,6 +9,16 @@ interface Props {
   fatiga: number
   /** Etapa de casa: cuantos objetos se ven en la habitacion. */
   etapaCasa: number
+  /**
+   * Que se esta haciendo en esta franja. `null` mientras se reparte la semana.
+   *
+   * No cambia el mobiliario ni añade capas: cambia la LUZ. La habitacion es la
+   * misma a las once de la mañana editando que a las tres de la madrugada
+   * durmiendo, y el juego se pasa la mitad del tiempo fuera de directo — una
+   * escena que se ve igual haciendo las seis cosas convierte el reproductor en
+   * un fondo de pantalla.
+   */
+  bloque?: BloqueId | null
   lloviendo: boolean
 }
 
@@ -24,7 +35,7 @@ interface Props {
  * elemento posicionado — para que sustituir una capa por su sprite no obligue
  * a tocar el resto de la aplicacion.
  */
-export function Stage({ intensidad, fatiga, etapaCasa, lloviendo }: Props) {
+export function Stage({ intensidad, fatiga, etapaCasa, bloque, lloviendo }: Props) {
   const objetos = useMemo(() => new Set(objetosVisibles(etapaCasa)), [etapaCasa])
   const tiene = (id: string) => objetos.has(id)
 
@@ -39,10 +50,16 @@ export function Stage({ intensidad, fatiga, etapaCasa, lloviendo }: Props) {
         className="stage__marco"
         style={{ '--intensidad': intensidad } as React.CSSProperties}
         data-etapa={etapaCasa}
+        data-bloque={bloque ?? undefined}
       >
         {/* Fondo de la habitacion */}
         <div className="stage__pared" />
         <div className="stage__suelo" />
+
+        {/* La luz de la franja. Va ANTES que el mobiliario y no despues: tiñe
+            la habitacion como la tiñe una lampara, no como la tapa un filtro
+            de color puesto encima de todo. */}
+        <div className="stage__ambiente" aria-hidden />
 
         {/* La ventana: la calle de la intro, vista desde dentro */}
         <div className="calle" title="Ahi fuera esta el alcance: ruidoso, frio y no lo controlas">

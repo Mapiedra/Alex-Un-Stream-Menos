@@ -2889,3 +2889,344 @@
     justify-items: stretch;
   }
 }
+
+/* ==========================================================================
+   LA LUZ DE LA FRANJA — la habitacion sabe que hora es
+   ==========================================================================
+
+   La escena solo reaccionaba al alcance, a la fatiga y a la etapa de casa, y
+   el juego se pasa la mitad del tiempo fuera de directo: editando, leyendo,
+   con la gente, durmiendo. Una habitacion que se ve igual haciendo las seis
+   cosas convierte el reproductor en un fondo de pantalla.
+
+   No se añade mobiliario ni se cambia la composicion: se cambia la LUZ, con
+   los mismos seis tokens que ya colorean la rejilla de la semana. Emitir es el
+   cian de la calle, editar el verde acido del material, dormir apaga la casa.
+   Quien pinta la semana ya se sabe esos colores. */
+
+.stage__ambiente {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--bloque, transparent);
+  mix-blend-mode: overlay;
+  opacity: 0;
+  transition:
+    opacity 700ms ease,
+    background-color 700ms ease;
+}
+
+.stage__marco[data-bloque] .stage__ambiente {
+  opacity: 0.22;
+}
+
+.stage__marco {
+  transition: filter 700ms ease;
+}
+
+/* Los mismos seis tokens de la rejilla. Ninguno es nuevo. */
+.stage__marco[data-bloque="emitir"] {
+  --bloque: var(--c-alcance);
+}
+
+.stage__marco[data-bloque="editar"] {
+  --bloque: var(--c-ingresos);
+}
+
+.stage__marco[data-bloque="comunidad"] {
+  --bloque: var(--c-comunidad);
+}
+
+.stage__marco[data-bloque="leer"] {
+  --bloque: var(--c-calidad);
+}
+
+.stage__marco[data-bloque="vida"] {
+  --bloque: var(--c-vida);
+}
+
+.stage__marco[data-bloque="dormir"] {
+  --bloque: var(--c-ideas);
+}
+
+/* Emitir enciende y dormir apaga: son los dos extremos del dia y los dos
+   unicos que ademas mueven el brillo. Los otros cuatro se distinguen solo por
+   color, porque son variaciones de estar despierto trabajando. */
+.stage__marco[data-bloque="emitir"] {
+  filter: brightness(1.08) saturate(1.1);
+}
+
+.stage__marco[data-bloque="dormir"] {
+  filter: brightness(0.55) saturate(0.7);
+}
+
+/* Quien haya pedido no ver animaciones tampoco quiere que la habitacion se
+   funda de un color a otro cada cuatro segundos. */
+@media (prefers-reduced-motion: reduce) {
+  .stage__ambiente,
+  .stage__marco {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   PUBLICAR — la decision, dentro del boton que la ejecuta
+   ==========================================================================
+
+   Los tres niveles estaban sueltos en la barra, comprimidos a una palabra y un
+   numero. Aqui dentro caben enteros: nombre, que hacen y lo que cuestan. La
+   decision que separa rendir hoy de construir el final se lee mejor abierta en
+   su menu que apretada entre el reloj y el boton de clip. */
+
+.publicar {
+  position: relative;
+  display: block;
+}
+
+.controles__publicar {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-data);
+  font-size: 13px;
+  text-transform: none;
+  padding: var(--space-1) var(--space-3);
+  white-space: nowrap;
+}
+
+/* El material no se ha ido de la barra: se ha pegado al boton que lo gasta. */
+.controles__publicar .controles__material {
+  color: var(--c-textBright);
+  font-size: 12px;
+}
+
+.controles__publicar:disabled {
+  opacity: 0.4;
+}
+
+/* Se abre HACIA ARRIBA. La barra vive al pie del reproductor y un menu que
+   cayera hacia abajo se comeria la fila de pestañas. */
+.publicar__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 20;
+  width: min(340px, 78vw);
+  display: grid;
+  gap: 1px;
+  background: var(--c-border);
+  border: 1px solid var(--c-borderStrong);
+}
+
+.publicar__nivel {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  white-space: normal;
+  padding: var(--space-2) var(--space-3);
+  background: var(--c-bgPanel);
+  border: none;
+  border-left: 3px solid var(--nivel, var(--c-accent));
+  font-family: var(--font-data);
+  font-size: 13px;
+  text-transform: none;
+}
+
+.publicar__nivel[data-nivel="rapido"] {
+  --nivel: var(--c-hype);
+}
+
+.publicar__nivel[data-nivel="normal"] {
+  --nivel: var(--c-accent);
+}
+
+.publicar__nivel[data-nivel="cuidado"] {
+  --nivel: var(--c-calidad);
+}
+
+.publicar__nivel:hover:not(:disabled) {
+  background: var(--c-bgRaised);
+}
+
+.publicar__nivel:disabled {
+  opacity: 0.45;
+}
+
+.publicar__nombre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--c-textBright);
+}
+
+.publicar__coste {
+  color: var(--c-ingresos);
+  font-size: 12px;
+}
+
+.publicar__desc {
+  color: var(--c-textMuted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   LA COLA PREPARADA — configurar lo que ya se compro
+   ========================================================================== */
+
+.cola {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  background: var(--c-bgRaised);
+  border: 1px solid var(--c-border);
+}
+
+.cola__titulo {
+  margin: 0;
+  font-size: 14px;
+  color: var(--c-textBright);
+}
+
+.cola__nota {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--c-textMuted);
+}
+
+.cola__niveles {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.cola__nivel {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  white-space: normal;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-data);
+  font-size: 13px;
+  text-transform: none;
+}
+
+.cola__nivel[data-activo="true"] {
+  border-color: var(--c-accent);
+  background: var(--c-bgPanel);
+}
+
+.cola__nombre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--c-textBright);
+}
+
+.cola__coste {
+  color: var(--c-ingresos);
+  font-size: 12px;
+}
+
+.cola__desc {
+  color: var(--c-textMuted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   UN STREAM MENOS — el objetivo del juego, desde la semana uno
+   ==========================================================================
+
+   Dos barras que se contradicen a proposito: la de arriba solo baja quitando
+   horas y la de abajo solo sube poniendolas. Verlas juntas ES la tesis. */
+
+.dependencia {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--c-bgPanel);
+  border: 1px solid var(--c-border);
+}
+
+.dependencia[data-logrado="true"] {
+  border-color: var(--c-ingresos);
+}
+
+.dependencia__cabecera {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.dependencia__barras {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dependencia__barra {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.dependencia__etiqueta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+.dependencia__cifra {
+  font-size: 14px;
+  color: var(--c-textBright);
+}
+
+.dependencia__barra[data-cumplido="true"] .dependencia__cifra {
+  color: var(--c-positive);
+}
+
+.dependencia__pista {
+  position: relative;
+  display: block;
+  height: 10px;
+  background: var(--c-bgRaised);
+  border: 1px solid var(--c-border);
+}
+
+.dependencia__relleno {
+  display: block;
+  height: 100%;
+  transition: width 400ms ease;
+}
+
+/* El liston, encima de la barra. La pregunta no es cuanto es el objetivo: es
+   cuanto te pasas de el, y eso solo se ve con las dos cosas superpuestas. */
+.dependencia__marca {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--c-textBright);
+}
+
+.dependencia__detalle {
+  font-size: 12px;
+  color: var(--c-textDim);
+}
+
+.dependencia__nota {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--c-textMuted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dependencia__relleno {
+    transition: none;
+  }
+}

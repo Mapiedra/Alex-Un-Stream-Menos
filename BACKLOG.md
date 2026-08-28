@@ -52,6 +52,20 @@ dependa del paso del tiempo da un falso negativo. Para eso existe el puente de
 
     __juego.getState().advance(5000)
 
+Dos cosas mas que hacen falta para que el puente sirva, descubiertas midiendo:
+
+  - `advance` NO hace nada con `pausaNarrativa` puesta, y una partida nueva
+    arranca con el aviso de ciclo delante. Hay que cerrarlo primero
+    (`cerrarAvisoCiclo()` y `setPausaNarrativa(false)`) o el reloj no se mueve
+    y parece que el puente esta roto.
+  - Sin composicion no avanzan las TRANSICIONES, asi que `getComputedStyle`
+    devuelve el valor de partida —`opacity: 0`, `filter: brightness(1)`— y
+    parece que la regla no se aplica. Inyectar
+    `* { transition: none !important }` antes de medir da el valor real. Es lo
+    unico que permite comprobar por DOM una regla que llega por transicion.
+
+Sigue sin poder hacerse una captura, que es lo que falta de verdad.
+
 ### La fuente de pixeles NO esta cargada — pendiente
 `--font-pixel` declara `'Silkscreen', 'Courier New', monospace` y en el
 proyecto no hay ni un `@font-face` ni un enlace a Google Fonts: toda la capa
@@ -127,11 +141,12 @@ material justo cuando la tienda te pide material para el flujo. No se ha visto
 romper nada en el banco, pero conviene mirarlo si algun playtest se queda
 atascado sin poder comprar nada.
 
-### El nivel de edicion automatico no tiene interfaz — F7
-`programacion` deja elegir con que nivel publica el calendario, y el estado
-(`nivelAuto`) y la accion del store (`setNivelAuto`) existen y estan testeados,
-pero no hay ningun control en pantalla para cambiarlo: se queda en 'normal'.
-Falta un selector en la tienda o en la barra de controles.
+### ~~El nivel de edicion automatico no tiene interfaz~~ — hecho
+Resuelto: la tienda enseña un selector de tres niveles dentro de la categoria
+Flujo de trabajo, visible solo con `programacion` comprado. Se ha puesto ahi y
+no en la barra del reproductor a proposito — la barra es para lo que se decide
+AHORA, y esto es una regla que se deja puesta. Verificado en el navegador:
+pulsar cambia `nivelAuto` en el estado y el store guarda.
 
 ## Decisiones que conviene revisar antes de publicar — F7
 

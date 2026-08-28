@@ -8,6 +8,13 @@ import {
   type Upgrade,
 } from '../../content/upgrades.ts'
 import { bolsilloDe, disponibilidad, type Disponibilidad } from '../../sim/allocation.ts'
+import {
+  DESCRIPCION_NIVEL,
+  NIVELES,
+  NOMBRE_NIVEL,
+  costeMaterial,
+  type NivelEdicion,
+} from '../../sim/publicacion.ts'
 import { useGame } from '../../store.ts'
 import { eur, fmt } from '../../format.ts'
 
@@ -61,6 +68,9 @@ export function Tienda() {
       {/* Cada categoria cobra en su moneda, y decirlo evita la pregunta de
           por que una mejora sin precio no se puede comprar. */}
       <p className="tienda__moneda">{MONEDA_CATEGORIA[categoria]}</p>
+
+      {/* Lo que se compra en Flujo hay que poder configurarlo en Flujo. */}
+      {categoria === 'flujo' && Boolean(owned['programacion']) && <ColaPreparada />}
 
       <ul className="tienda__lista">
         {items.map(({ up, d, niveles }) => (
@@ -183,4 +193,54 @@ const ETIQUETA_ACTIVIDAD: Record<string, string> = {
   comunidad: 'a comunidad',
   vida: 'a vida',
   descanso: 'a descanso',
+}
+
+/**
+ * CON QUE MIMO PUBLICA EL CALENDARIO CUANDO NO ESTAS DELANTE.
+ *
+ * `Dejar la cola preparada` promete literalmente "decides con que mimo sale
+ * cada cosa sin tener que estar delante", y hasta ahora no habia donde
+ * decidirlo: el estado (`nivelAuto`), la accion del store y el tick que lo lee
+ * existian y estaban testeados, pero sin ningun control en pantalla se quedaba
+ * clavado en 'normal'. Se podia comprar una automatizacion y no configurarla.
+ *
+ * Vive en la tienda y no en la barra del reproductor a proposito. La barra es
+ * para lo que se decide AHORA —este video, este directo—; esto es una regla que
+ * se deja puesta y se olvida, y esas viven donde se compraron.
+ */
+function ColaPreparada() {
+  const nivelAuto = useGame((s) => s.game.nivelAuto)
+  const setNivelAuto = useGame((s) => s.setNivelAuto)
+
+  return (
+    <section className="cola" aria-labelledby="cola-titulo">
+      <h3 className="cola__titulo" id="cola-titulo">
+        Cómo sale lo que publicas sin ti
+      </h3>
+      <p className="cola__nota">
+        El calendario saca material aunque no estés delante. Esto decide con cuánto mimo — y por
+        tanto cuánto material se le va en cada vídeo.
+      </p>
+
+      <div className="cola__niveles" role="radiogroup" aria-label="Nivel de edición automática">
+        {NIVELES.map((n: NivelEdicion) => (
+          <button
+            key={n}
+            className="cola__nivel"
+            data-nivel={n}
+            data-activo={nivelAuto === n}
+            role="radio"
+            aria-checked={nivelAuto === n}
+            onClick={() => setNivelAuto(n)}
+          >
+            <span className="cola__nombre">
+              {NOMBRE_NIVEL[n]}
+              <span className="cola__coste data">{costeMaterial(n)} material</span>
+            </span>
+            <span className="cola__desc">{DESCRIPCION_NIVEL[n]}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
 }

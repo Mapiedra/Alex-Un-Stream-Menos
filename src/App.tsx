@@ -8,6 +8,7 @@ import { ChatPanel } from './ui/player/ChatPanel.tsx'
 import { Tienda } from './ui/panels/Tienda.tsx'
 import { Formatos } from './ui/panels/Formatos.tsx'
 import { Carrera } from './ui/panels/Carrera.tsx'
+import { Dependencia } from './ui/panels/Dependencia.tsx'
 import { Momentos } from './ui/panels/Momentos.tsx'
 import { Marcas } from './ui/panels/Marcas.tsx'
 import { Planificador } from './ui/panels/Planificador.tsx'
@@ -177,6 +178,10 @@ function Partida() {
             intensidad={intensidad}
             fatiga={g.fatiga}
             etapaCasa={g.houseStage}
+            /* La habitacion sabe que hora es. Emitir enciende la escena;
+               dormir la apaga. El estado ya se decia con palabras en el
+               marcador — ahora tambien se ve. */
+            bloque={g.semana.fase === 'viviendo' ? bloqueActual(g.semana) : null}
             lloviendo
           />
 
@@ -283,6 +288,11 @@ function Partida() {
 
         {pantalla === 'carrera' && (
           <>
+            {/* Primero a donde vas, despues por donde vas. El panel del
+                Retiro no aparece hasta el ultimo ciclo; este esta desde la
+                semana uno porque el objetivo del juego no puede ser una
+                sorpresa del final. */}
+            <Dependencia />
             <Carrera />
             <Retiro />
           </>

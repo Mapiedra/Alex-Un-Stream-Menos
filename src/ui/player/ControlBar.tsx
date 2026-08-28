@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import {
   DESCRIPCION_NIVEL,
   NIVELES,
@@ -43,6 +44,22 @@ interface Props {
  * El boton Clip sigue siendo el momento clippeable del GDD (6.1): se enciende
  * solo cuando hay algo que capturar y da unos segundos holgados. Fallarlo
  * pierde el bonus, nunca progreso.
+ *
+ * TRES BOTONES, NO SEIS. La barra habia acumulado pausa, reloj, interruptor,
+ * una cifra de material suelta y tres niveles de publicacion: ocho elementos en
+ * una fila que a 900 px envolvia en dos lineas. Una barra de reproductor que
+ * hay que leer entera para saber que se puede pulsar ha dejado de parecer una
+ * barra de reproductor.
+ *
+ * Lo que se ha hecho NO es esconder nada, es ordenarlo por profundidad. Los
+ * tres niveles viven ahora dentro de Publicar, que es donde se decide entre
+ * ellos, y ahi caben ENTEROS —nombre, descripcion y coste— en vez de
+ * comprimidos a una palabra y un numero. La decision que separa rendir hoy de
+ * construir el final se leia peor apretada en la barra que abierta en su menu.
+ *
+ * El material no se va a ninguna parte: sigue en la barra, pegado al boton que
+ * lo gasta. Ahi la cifra contesta una pregunta —¿me llega?— en vez de ser un
+ * dato mas entre los del reloj.
  */
 export function ControlBar({
   enPausa,
@@ -60,6 +77,38 @@ export function ControlBar({
   onClip,
   onPublicar,
 }: Props) {
+  const [abierto, setAbierto] = useState(false)
+  const caja = useRef<HTMLDivElement>(null)
+
+  /**
+   * El menu se cierra solo al pulsar fuera o con Escape.
+   *
+   * Sin esto, un panel abierto tapa la esquina del chat hasta que el jugador
+   * adivina que tiene que volver a pulsar el mismo boton. Un desplegable que no
+   * se cierra como se cierran todos los desplegables es un fallo, no un estilo.
+   */
+  useEffect(() => {
+    if (!abierto) return
+
+    const fuera = (e: PointerEvent) => {
+      if (!caja.current?.contains(e.target as Node)) setAbierto(false)
+    }
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAbierto(false)
+    }
+
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [abierto])
+
+  // Sin material no hay nada que publicar a ningun nivel: el boton se apaga
+  // entero en vez de abrir un menu con las tres opciones en gris.
+  const puedePublicar = NIVELES.some((n) => hayMaterial(material, n))
+
   return (
     <div className="controles">
       <div className="controles__barra">
@@ -105,27 +154,51 @@ export function ControlBar({
             {enDirecto ? 'Cortar el directo' : 'Empezar el directo'}
           </button>
 
-          <span
-            className="controles__material data"
-            title="Vídeos montados y listos para subir. Salen de las franjas de editar."
-          >
-            Material {material.toFixed(1)}
-          </span>
-
-          <div className="publicar">
-            {NIVELES.map((n) => (
-              <button
-                key={n}
-                className="publicar__nivel"
-                data-nivel={n}
-                onClick={() => onPublicar(n)}
-                disabled={!hayMaterial(material, n)}
-                title={`${DESCRIPCION_NIVEL[n]} Cuesta ${costeMaterial(n)} de material.`}
+          <div className="publicar" ref={caja}>
+            <button
+              className="controles__publicar"
+              onClick={() => setAbierto((v) => !v)}
+              disabled={!puedePublicar}
+              aria-expanded={abierto}
+              aria-haspopup="menu"
+              title={
+                puedePublicar
+                  ? 'Sacar un vídeo. Tú eliges con cuánto mimo.'
+                  : 'No tienes material montado. Sale de las franjas de editar.'
+              }
+            >
+              Publicar
+              <span
+                className="controles__material data"
+                title="Vídeos montados y listos para subir"
               >
-                {NOMBRE_NIVEL[n]}
-                <span className="publicar__coste data">{costeMaterial(n)}</span>
-              </button>
-            ))}
+                {material.toFixed(1)}
+              </span>
+            </button>
+
+            {abierto && (
+              <div className="publicar__menu" role="menu" aria-label="Cómo sacarlo">
+                {NIVELES.map((n) => (
+                  <button
+                    key={n}
+                    className="publicar__nivel"
+                    data-nivel={n}
+                    role="menuitem"
+                    onClick={() => {
+                      onPublicar(n)
+                      setAbierto(false)
+                    }}
+                    disabled={!hayMaterial(material, n)}
+                  >
+                    <span className="publicar__nombre">
+                      {NOMBRE_NIVEL[n]}
+                      <span className="publicar__coste data">{costeMaterial(n)} material</span>
+                    </span>
+                    <span className="publicar__desc">{DESCRIPCION_NIVEL[n]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <button
